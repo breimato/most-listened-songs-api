@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(python -m venv .venv)",
+      "Bash(.venv/Scripts/pip install:*)",
+      "Bash(.venv/Scripts/python -m pytest tests/ -v)",
+      "Bash(rtk ls:*)",
+      "Bash(curl -s http://127.0.0.1:8000/health)",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/api/v1/ingest/youtube -H \"Content-Type: application/json\" -d '{\"\"\"\"file_path\"\"\"\":\"\"\"\"data/youtube/watch-history-test.json\"\"\"\"}')",
+      "Bash(python -m json.tool)",
+      "Bash(curl -s \"http://127.0.0.1:8000/api/v1/songs/top?limit=10\")",
+      "Bash(.venv/Scripts/python debug_drive.py)",
+      "Bash(.venv/Scripts/python -m canciones serve)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :8000)",
+      "Bash(taskkill:*)",
+      "Bash(cmd /c \"taskkill /PID 38688 /F\")",
+      "Bash(cmd /c \"for /f \\\\\"tokens=5\\\\\" %a in \\('netstat -ano ^| findstr :8000 ^| findstr LISTENING'\\) do taskkill /F /PID %a\")",
+      "Bash(cmd /c \"netstat -ano | findstr :8000 | findstr LISTENING\")",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 8000 -State Listen | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force; Write-Host \\\\\"Killed PID: $_\\\\\" }\")",
+      "Bash(.venv/Scripts/python -m canciones serve --port 8001)",
+      "Bash(curl -s http://127.0.0.1:8001/health)",
+      "Bash(.venv/Scripts/python debug_zip.py)",
+      "Bash(cmd /c \"for /f \"\"tokens=5\"\" %a in \\(''netstat -ano ^| findstr :8001 ^| findstr LISTENING''\\) do taskkill /F /PID %a\")",
+      "Bash(.venv/Scripts/python -m canciones serve --port 8002)",
+      "Bash(curl -s http://127.0.0.1:8002/health)",
+      "Bash(.venv/Scripts/python debug_drive2.py)",
+      "Bash(.venv/Scripts/python debug_zip_index.py)",
+      "Bash(.venv/Scripts/python -c \":*)"
+    ]
+  }
+}
