@@ -187,6 +187,49 @@ def sync_youtube(
     return _ingest(extracted, Platform.YOUTUBE, YouTubeTakeoutParser(), repo)
 
 
+@router.post("/sync/lastfm", response_model=IngestResponse)
+def sync_lastfm(
+    repo: SQLiteRepository = Depends(get_repository),
+):
+    from canciones.adapters.lastfm.api_ingestor import LastFMAPIIngestor
+
+    ingestor = LastFMAPIIngestor()
+    try:
+        pairs = ingestor.fetch_recent()
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+    events_imported = 0
+    events_skipped = 0
+    songs_new = 0
+
+    for song_data, event_data in pairs:
+        existing = repo.get_platform_song_by_platform_id(
+            song_data.platform, song_data.platform_id
+        )
+        if existing:
+            platform_song_id = existing.id
+        else:
+            saved = repo.save_platform_song(song_data)
+            platform_song_id = saved.id
+            songs_new += 1
+
+        if repo.event_exists(platform_song_id, event_data.listened_at):
+            events_skipped += 1
+            continue
+
+        event_data.platform_song_id = platform_song_id
+        repo.save_listening_event(event_data)
+        events_imported += 1
+
+    return IngestResponse(
+        events_imported=events_imported,
+        events_skipped=events_skipped,
+        songs_new=songs_new,
+        message=f"Imported {events_imported} scrobbles from Last.fm ({songs_new} new songs, {events_skipped} duplicates skipped).",
+    )
+
+
 # --- Query endpoints ---
 
 

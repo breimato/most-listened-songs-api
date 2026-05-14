@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     google_client_secret: str = ""
     google_drive_folder: str = "Takeout"
     data_dir: str = "data"
+    lastfm_api_key: str = ""
+    lastfm_username: str = ""
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

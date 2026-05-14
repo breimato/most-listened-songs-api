@@ -79,27 +79,62 @@ def cmd_sync(args):
     repo = SQLiteRepository(session)
 
     try:
-        from canciones.adapters.google_drive.drive_sync import GoogleDriveSync
-        from canciones.adapters.youtube.takeout_parser import YouTubeTakeoutParser
-        from canciones.api.router import _ingest
-        from canciones.config import settings
-        from pathlib import Path
+        if args.platform == "lastfm":
+            from canciones.adapters.lastfm.api_ingestor import LastFMAPIIngestor
 
-        drive = GoogleDriveSync()
-        files = drive.find_takeout_files()
-        if not files:
-            print("No Takeout files found in Google Drive.")
-            return
+            ingestor = LastFMAPIIngestor()
+            pairs = ingestor.fetch_recent()
 
-        dest_dir = str(Path(settings.data_dir) / "youtube")
-        extracted = drive.download_and_extract(files[0]["id"], dest_dir)
-        if not extracted:
-            print("No watch-history found in downloaded file.")
-            return
+            events_imported = 0
+            events_skipped = 0
+            songs_new = 0
 
-        result = _ingest(extracted, Platform.YOUTUBE, YouTubeTakeoutParser(), repo)
-        session.commit()
-        print(result.message)
+            for song_data, event_data in pairs:
+                existing = repo.get_platform_song_by_platform_id(
+                    song_data.platform, song_data.platform_id
+                )
+                if existing:
+                    platform_song_id = existing.id
+                else:
+                    saved = repo.save_platform_song(song_data)
+                    platform_song_id = saved.id
+                    songs_new += 1
+
+                if repo.event_exists(platform_song_id, event_data.listened_at):
+                    events_skipped += 1
+                    continue
+
+                event_data.platform_song_id = platform_song_id
+                repo.save_listening_event(event_data)
+                events_imported += 1
+
+            session.commit()
+            print(
+                f"Imported {events_imported} scrobbles from Last.fm "
+                f"({songs_new} new songs, {events_skipped} duplicates skipped)."
+            )
+        else:
+            from canciones.adapters.google_drive.drive_sync import GoogleDriveSync
+            from canciones.adapters.youtube.takeout_parser import YouTubeTakeoutParser
+            from canciones.api.router import _ingest
+            from canciones.config import settings
+            from pathlib import Path
+
+            drive = GoogleDriveSync()
+            files = drive.find_takeout_files()
+            if not files:
+                print("No Takeout files found in Google Drive.")
+                return
+
+            dest_dir = str(Path(settings.data_dir) / "youtube")
+            extracted = drive.download_and_extract(files[0]["id"], dest_dir)
+            if not extracted:
+                print("No watch-history found in downloaded file.")
+                return
+
+            result = _ingest(extracted, Platform.YOUTUBE, YouTubeTakeoutParser(), repo)
+            session.commit()
+            print(result.message)
     except Exception as e:
         session.rollback()
         print(f"Error: {e}")
@@ -147,13 +182,13 @@ def main():
 
     # sync
     p_sync = sub.add_parser("sync", help="Sync from Google Drive")
-    p_sync.add_argument("platform", choices=["youtube"])
+    p_sync.add_argument("platform", choices=["youtube", "lastfm"])
     p_sync.set_defaults(func=cmd_sync)
 
     # top
     p_top = sub.add_parser("top", help="Show top songs")
     p_top.add_argument("--limit", type=int, default=25)
-    p_top.add_argument("--platform", choices=["youtube", "spotify"])
+    p_top.add_argument("--platform", choices=["youtube", "spotify", "lastfm"])
     p_top.set_defaults(func=cmd_top)
 
     args = parser.parse_args()

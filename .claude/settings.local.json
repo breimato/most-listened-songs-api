@@ -27,7 +27,9 @@
       "Bash(curl -s http://127.0.0.1:8002/health)",
       "Bash(.venv/Scripts/python debug_drive2.py)",
       "Bash(.venv/Scripts/python debug_zip_index.py)",
-      "Bash(.venv/Scripts/python -c \":*)"
+      "Bash(.venv/Scripts/python -c \":*)",
+      "mcp__plugin_claude-mem_mcp-search__get_observations",
+      "mcp__plugin_claude-mem_mcp-search__smart_outline"
     ]
   }
 }

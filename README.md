@@ -96,12 +96,46 @@ Request your data at [spotify.com/account/privacy](https://www.spotify.com/accou
 python -m canciones ingest spotify path/to/StreamingHistory.json
 ```
 
-### Last.fm
+### Last.fm (export)
 
 Export your scrobbles from `last.fm/user/USERNAME/library`, then:
 
 ```bash
 python -m canciones ingest lastfm path/to/scrobbles.csv
+```
+
+### Real-time tracking via Last.fm + Pano Scrobbler
+
+For continuous, accurate tracking (including loops and mobile plays), use Last.fm as a universal scrobble layer:
+
+**One-time setup:**
+1. Create a free account at [last.fm](https://www.last.fm)
+2. Install **Pano Scrobbler** on Android — connect it to your Last.fm account
+3. In Pano Scrobbler, enable Spotify, YouTube, and YouTube Music
+4. Create a free API key at last.fm/api/account/create
+5. Add to your `.env`:
+   ```
+   LASTFM_API_KEY=your_api_key_here
+   LASTFM_USERNAME=your_lastfm_username
+   ```
+
+**Syncing scrobbles:**
+
+```bash
+python -m canciones sync lastfm
+```
+
+Or via API:
+```http
+POST /api/v1/sync/lastfm
+```
+
+The first run imports your full scrobble history. Each subsequent run only fetches new scrobbles since the last sync (cursor stored in `data/lastfm_cursor.json`). Running the same sync twice imports 0 duplicates.
+
+**Querying Last.fm data:**
+```http
+GET /api/v1/songs/top?platform=lastfm
+GET /api/v1/stats?platform=lastfm
 ```
 
 ---
@@ -121,6 +155,7 @@ python -m canciones ingest lastfm path/to/scrobbles.csv
 | `POST` | `/api/v1/ingest/lastfm` | Import Last.fm CSV export |
 | `POST` | `/api/v1/enrich/youtube` | Enrich metadata via YouTube Data API |
 | `POST` | `/api/v1/sync/youtube` | Auto-download from Google Drive and ingest |
+| `POST` | `/api/v1/sync/lastfm` | Poll Last.fm API for new scrobbles (incremental) |
 | `POST` | `/api/v1/songs/link` | Manually link a song to a canonical entry |
 | `POST` | `/api/v1/songs/merge` | Merge two canonical songs |
 | `GET` | `/api/v1/songs/unmatched` | Songs without a cross-platform match |
@@ -136,6 +171,7 @@ python -m canciones ingest spotify <file>
 python -m canciones ingest lastfm <file>
 python -m canciones enrich youtube     # Enrich with YouTube API metadata
 python -m canciones sync youtube       # Sync from Google Drive
+python -m canciones sync lastfm        # Poll Last.fm for new scrobbles
 python -m canciones top --limit 25    # Print top songs in terminal
 ```
 
