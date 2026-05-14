@@ -14,9 +14,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(
-    title="Canciones Mas Escuchadas API",
-    description="API personal para consultar las canciones mas escuchadas en YouTube y Spotify",
-    version="0.1.0",
+    title="Canciones Mas Escuchadas",
+    description="Track your most played songs via Last.fm scrobbles",
+    version="1.0.0",
     lifespan=lifespan,
 )
 

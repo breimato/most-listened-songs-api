@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 from canciones.config import settings
-from canciones.domain.models import ListeningEvent, Platform, PlatformSong
+from canciones.domain.models import Song
 
 _API_BASE = "https://ws.audioscrobbler.com/2.0/"
 _CURSOR_FILE = "data/lastfm_cursor.json"
@@ -23,11 +23,11 @@ class LastFMAPIIngestor:
         self._api_key = api_key or settings.lastfm_api_key
         self._username = username or settings.lastfm_username
 
-    def fetch_recent(self) -> list[tuple[PlatformSong, ListeningEvent]]:
+    def fetch_recent(self) -> list[tuple[Song, datetime]]:
         """Fetch all scrobbles since the last cursor timestamp.
 
-        On the first run (no cursor), fetches the full history.
-        On subsequent runs, only fetches new scrobbles since the last sync.
+        First run: imports full history. Subsequent runs: only new scrobbles.
+        Returns a list of (Song, played_at) pairs.
         """
         if not self._api_key or not self._username:
             raise ValueError("LASTFM_API_KEY and LASTFM_USERNAME must be set in .env")
@@ -36,13 +36,13 @@ class LastFMAPIIngestor:
         pairs = self._paginate(from_ts=from_ts)
 
         if pairs:
-            latest_ts = max(int(event.listened_at.timestamp()) for _, event in pairs)
+            latest_ts = max(int(played_at.timestamp()) for _, played_at in pairs)
             self._save_cursor(latest_ts + 1)
 
         return pairs
 
-    def _paginate(self, from_ts: int | None) -> list[tuple[PlatformSong, ListeningEvent]]:
-        all_pairs: list[tuple[PlatformSong, ListeningEvent]] = []
+    def _paginate(self, from_ts: int | None) -> list[tuple[Song, datetime]]:
+        all_pairs: list[tuple[Song, datetime]] = []
         page = 1
 
         while True:
@@ -81,7 +81,7 @@ class LastFMAPIIngestor:
         with urllib.request.urlopen(url, timeout=30) as resp:
             return json.loads(resp.read().decode("utf-8"))
 
-    def _parse_tracks(self, tracks: list) -> list[tuple[PlatformSong, ListeningEvent]]:
+    def _parse_tracks(self, tracks: list) -> list[tuple[Song, datetime]]:
         results = []
         for entry in tracks:
             # Skip "now playing" entries — they have no timestamp
@@ -92,15 +92,13 @@ class LastFMAPIIngestor:
             if isinstance(artist, dict):
                 artist = artist.get("#text", "")
 
-            track = entry.get("name", "")
+            title = entry.get("name", "")
 
             album = entry.get("album", "")
             if isinstance(album, dict):
                 album = album.get("#text", "")
 
-            mbid = entry.get("mbid", "")
-
-            if not track or not artist:
+            if not title or not artist:
                 continue
 
             date = entry.get("date", {})
@@ -108,22 +106,11 @@ class LastFMAPIIngestor:
             if not uts:
                 continue
 
-            listened_at = datetime.utcfromtimestamp(int(uts))
-            platform_id = f"{artist}|{track}".lower()
+            played_at = datetime.utcfromtimestamp(int(uts))
+            platform_id = f"{artist}|{title}".lower()
 
-            song = PlatformSong(
-                platform=Platform.LASTFM,
-                platform_id=platform_id,
-                title=track,
-                artist=artist,
-                channel=artist,
-                extra_metadata={"album": album, "mbid": mbid},
-            )
-            event = ListeningEvent(
-                listened_at=listened_at,
-                platform=Platform.LASTFM,
-            )
-            results.append((song, event))
+            song = Song(platform_id=platform_id, title=title, artist=artist, album=album)
+            results.append((song, played_at))
 
         return results
 
