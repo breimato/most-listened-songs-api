@@ -50,12 +50,18 @@ def sync(repo: SQLiteRepository = Depends(get_repository)):
 def get_top_songs(
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
+    top: int | None = Query(None, ge=1, le=500),
+    year: int | None = None,
     artist: str | None = None,
     since: datetime | None = None,
     until: datetime | None = None,
     repo: SQLiteRepository = Depends(get_repository),
 ):
-    stats = repo.get_top_songs(limit=limit, offset=offset, artist=artist, since=since, until=until)
+    effective_limit = top if top is not None else limit
+    if year is not None:
+        since = datetime(year, 1, 1)
+        until = datetime(year, 12, 31, 23, 59, 59)
+    stats = repo.get_top_songs(limit=effective_limit, offset=offset, artist=artist, since=since, until=until)
     return [
         SongResponse(id=s.song_id, title=s.title, artist=s.artist, album=s.album, plays=s.play_count)
         for s in stats
