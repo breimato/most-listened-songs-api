@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from canciones.adapters.db.models import PlayDB, SongDB
 from canciones.domain.models import ArtistStats, GeneralStats, Play, Song, SongStats
+from canciones.domain.normalization import normalize_artist, normalized_key
 
 
 def _to_song(db: SongDB) -> Song:
@@ -66,17 +67,46 @@ class SQLiteRepository:
         if until:
             query = query.filter(PlayDB.played_at <= until)
 
-        rows = (
-            query.group_by(SongDB.id)
-            .order_by(func.count(PlayDB.id).desc())
-            .offset(offset)
-            .limit(limit)
-            .all()
-        )
-        return [
-            SongStats(song_id=r.id, title=r.title, artist=r.artist, album=r.album, play_count=r.play_count)
-            for r in rows
-        ]
+        rows = query.group_by(SongDB.id).all()
+
+        grouped = self._group_by_normalized(rows)
+        grouped.sort(key=lambda s: s.play_count, reverse=True)
+        return grouped[offset : offset + limit]
+
+    @staticmethod
+    def _group_by_normalized(rows) -> list[SongStats]:
+        """Merge different versions of the same song into one entry.
+
+        Rows are (id, title, artist, album, play_count). Songs sharing a
+        normalized key are summed; the variant with the most plays is used as
+        the display representative.
+        """
+        aggregated: dict[str, SongStats] = {}
+        top_variant_plays: dict[str, int] = {}
+
+        for r in rows:
+            key = normalized_key(r.artist, r.title)
+            existing = aggregated.get(key)
+            if existing is None:
+                aggregated[key] = SongStats(
+                    song_id=r.id,
+                    title=r.title,
+                    artist=r.artist,
+                    album=r.album,
+                    play_count=r.play_count,
+                )
+                top_variant_plays[key] = r.play_count
+                continue
+
+            existing.play_count += r.play_count
+            if r.play_count > top_variant_plays[key]:
+                top_variant_plays[key] = r.play_count
+                existing.song_id = r.id
+                existing.title = r.title
+                existing.artist = r.artist
+                existing.album = r.album
+
+        return list(aggregated.values())
 
     def get_top_artists(
         self,
@@ -123,19 +153,21 @@ class SQLiteRepository:
 
         total_plays = q.count()
 
-        song_q = self.session.query(SongDB.id).join(PlayDB, PlayDB.song_id == SongDB.id)
+        song_q = (
+            self.session.query(SongDB.artist, SongDB.title)
+            .join(PlayDB, PlayDB.song_id == SongDB.id)
+        )
         if since:
             song_q = song_q.filter(PlayDB.played_at >= since)
         if until:
             song_q = song_q.filter(PlayDB.played_at <= until)
-        total_songs = song_q.distinct().count()
-
-        artist_q = self.session.query(SongDB.artist).join(PlayDB, PlayDB.song_id == SongDB.id)
-        if since:
-            artist_q = artist_q.filter(PlayDB.played_at >= since)
-        if until:
-            artist_q = artist_q.filter(PlayDB.played_at <= until)
-        total_artists = artist_q.distinct().count()
+        song_keys = set()
+        artist_keys = set()
+        for artist_name, title in song_q.distinct().all():
+            song_keys.add(normalized_key(artist_name or "", title or ""))
+            artist_keys.add(normalize_artist(artist_name or ""))
+        total_songs = len(song_keys)
+        total_artists = len(artist_keys)
 
         timestamps = q.with_entities(PlayDB.played_at).all()
         month_counter: Counter[str] = Counter()

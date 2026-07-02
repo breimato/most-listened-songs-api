@@ -34,6 +34,16 @@ python -m canciones sync   # import your scrobble history
 python -m canciones serve  # start API at http://127.0.0.1:8000
 ```
 
+### 4. Frontend (opcional)
+
+```bash
+cd frontend
+npm install
+npm run dev   # http://127.0.0.1:5173
+```
+
+El frontend hace proxy de la API al backend en el puerto 8000. Necesitas tener ambos en marcha.
+
 ---
 
 ## CLI
@@ -82,3 +92,22 @@ Android (Pano Scrobbler)
 ```
 
 Each `sync` only fetches scrobbles newer than the last run (cursor in `data/lastfm_cursor.json`). Running sync twice in a row imports 0 duplicates.
+
+---
+
+## Frontend
+
+Interfaz web en `frontend/` (React + Vite + TypeScript):
+
+- **Top canciones** con ranking, barras de progreso y filtro por artista
+- **Top artistas** del periodo seleccionado
+- **Actividad** con gráficos por mes y por hora
+- Botón **Sincronizar Last.fm** que llama a `POST /api/v1/sync`
+- Filtros por cantidad (top 10/25/50/100) y por año
+
+```bash
+cd frontend
+npm install
+npm run dev      # desarrollo
+npm run build    # build de producción en frontend/dist
+```
