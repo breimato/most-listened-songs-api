@@ -145,6 +145,8 @@ npm run build    # build de producción en frontend/dist
 
 Los manifiestos viven en `breimato/cluster-config` (`apps/youtube` y `clusters/fedora-brei/youtube.yaml`). El workflow de GitHub Actions construye la imagen, la publica en GHCR y actualiza el tag en `cluster-config` cuando existe el secret `DEPLOY_REPO_TOKEN`.
 
+Un CronJob del cluster llama a `POST /api/v1/sync` cada 15 minutos, así que los scrobbles nuevos aparecen solos (Last.fm puede tardar unos minutos en procesarlos).
+
 Crear los Secrets una vez (requiere acceso `kubectl`):
 
 ```bash
