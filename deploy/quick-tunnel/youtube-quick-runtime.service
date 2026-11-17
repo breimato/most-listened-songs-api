@@ -5,7 +5,6 @@ After=youtube-quick-tunnel.service
 StartLimitIntervalSec=0
 
 [Service]
-Environment="YT_FRONTEND_DIR=__FRONTEND_DIR__"
 ExecStart=/usr/bin/python3 __SCRIPT__
 Restart=always
 RestartSec=10

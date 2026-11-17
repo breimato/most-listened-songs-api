@@ -45,7 +45,13 @@ def load_deploy_env() -> dict[str, str]:
 
 
 def http(url: str, method: str = "GET", headers: dict[str, str] | None = None):
-    request = urllib.request.Request(url, method=method, headers=headers or {})
+    request_headers = {
+        # SiteGround devuelve 403 al User-Agent de urllib.
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/130.0 Safari/537.36",
+        **(headers or {}),
+    }
+    request = urllib.request.Request(url, method=method, headers=request_headers)
     with urllib.request.urlopen(request, timeout=25) as response:
         return response.status, {k.lower(): v for k, v in response.headers.items()}, response.read()
 

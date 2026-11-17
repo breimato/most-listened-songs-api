@@ -6,13 +6,11 @@ import time
 import urllib.parse
 import urllib.request
 from datetime import datetime
-from pathlib import Path
 
 from canciones.config import settings
 from canciones.domain.models import Song
 
 _API_BASE = "https://ws.audioscrobbler.com/2.0/"
-_CURSOR_FILE = "data/lastfm_cursor.json"
 _PAGE_SIZE = 200
 _PAGE_DELAY = 0.25  # seconds between pages to be polite with the API
 
@@ -25,25 +23,16 @@ class LastFMAPIIngestor:
         self._username = username or settings.lastfm_username
 
     def fetch_recent(self, from_ts: int | None = None) -> list[tuple[Song, datetime]]:
-        """Fetch all scrobbles since the last cursor timestamp.
+        """Fetch all scrobbles since ``from_ts`` (UTC unix timestamp).
 
-        First run: imports full history. Subsequent runs: only new scrobbles.
-        When ``from_ts`` is not provided, the legacy local cursor file is used.
-        Returns a list of (Song, played_at) pairs.
+        The caller passes the newest stored play (``MAX(plays.played_at)``), so
+        the cursor lives in the database instead of a local file. Without a
+        cursor the full history is fetched. Returns (Song, played_at) pairs.
         """
         if not self._api_key or not self._username:
             raise ValueError("LASTFM_API_KEY and LASTFM_USERNAME must be set in .env")
 
-        if from_ts is None:
-            from_ts = self._load_cursor()
-
-        pairs = self._paginate(from_ts=from_ts)
-
-        if pairs:
-            latest_ts = max(to_unix_timestamp(played_at) for _, played_at in pairs)
-            self._save_cursor(latest_ts + 1)
-
-        return pairs
+        return self._paginate(from_ts=from_ts)
 
     def _paginate(self, from_ts: int | None) -> list[tuple[Song, datetime]]:
         all_pairs: list[tuple[Song, datetime]] = []
@@ -117,20 +106,6 @@ class LastFMAPIIngestor:
             results.append((song, played_at))
 
         return results
-
-    def _load_cursor(self) -> int | None:
-        path = Path(_CURSOR_FILE)
-        if path.exists():
-            try:
-                return json.loads(path.read_text()).get("from_ts")
-            except (json.JSONDecodeError, KeyError):
-                pass
-        return None
-
-    def _save_cursor(self, from_ts: int) -> None:
-        path = Path(_CURSOR_FILE)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps({"from_ts": from_ts}))
 
 
 def to_unix_timestamp(value: datetime) -> int:
