@@ -1,4 +1,9 @@
 import type { Artist, Song, Stats, SyncResult, TopSongsFilters } from '../types/api'
+import {
+  clearStoredAccessKey,
+  getAccessKey,
+  notifyUnauthorized,
+} from './auth'
 import { getApiBaseUrl } from './runtimeConfig'
 
 function apiBase(): string {
@@ -6,7 +11,17 @@ function apiBase(): string {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBase()}${path}`, init)
+  const headers = new Headers(init?.headers)
+  const key = getAccessKey()
+  if (key) headers.set('Authorization', `Bearer ${key}`)
+
+  const response = await fetch(`${apiBase()}${path}`, { ...init, headers })
+
+  if (response.status === 401) {
+    clearStoredAccessKey()
+    notifyUnauthorized()
+    throw new Error('Llave de acceso incorrecta o caducada.')
+  }
 
   if (!response.ok) {
     const detail = await response.text()
@@ -14,6 +29,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return response.json() as Promise<T>
+}
+
+export async function checkAccess(key: string): Promise<boolean> {
+  const response = await fetch(`${apiBase()}/stats`, {
+    headers: { Authorization: `Bearer ${key}` },
+  })
+  if (response.status === 401) return false
+  if (!response.ok) throw new Error(`Error ${response.status}`)
+  return true
 }
 
 function buildQuery(params: Record<string, string | number | undefined>): string {

@@ -60,6 +60,7 @@ invierno `#5b8def → #25346b`, primavera `#3ddc84 → #0f7a43`, año
 - **Recap**: modal con portada degradada por temporada, top 6, artista del periodo y copia del resumen.
 - **Notificaciones**: popover con recaps disponibles, temporadas en curso y próximo recap.
 - **Toast**: aviso de sincronización con punto de color y cierre.
+- **Puerta de acceso**: pantalla de desbloqueo con la marca, campo de llave con mostrar/ocultar, opción de recordar y estado de error.
 
 ## Movimiento
 
@@ -79,5 +80,6 @@ invierno `#5b8def → #25346b`, primavera `#3ddc84 → #0f7a43`, año
 
 - Español, frases cortas, sin signos de admiración.
 - Datos reales: no inventar cifras, testimonios ni capacidades.
-- Portadas reales vía Deezer (JSONP) con caché local e iTunes como respaldo; si no hay
-  coincidencia se usa una portada generada determinista con monograma.
+- Portadas reales vía iTunes con caché local; si no hay coincidencia se usa una
+  portada generada determinista con monograma.
+- La llave de acceso se pide en la web y nunca se incluye en el bundle.

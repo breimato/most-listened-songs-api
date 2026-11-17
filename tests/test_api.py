@@ -8,6 +8,7 @@ from sqlalchemy.pool import StaticPool
 
 from canciones.adapters.db.models import Base, PlayDB, SongDB
 from canciones.adapters.db.session import get_session
+from canciones.config import settings
 from canciones.main import app
 
 
@@ -143,3 +144,34 @@ def test_sync_without_lastfm_credentials(client):
     r = client.post("/api/v1/sync")
     assert r.status_code == 400
     assert "LASTFM" in r.json()["detail"]
+
+
+def test_access_key_protects_api(client, monkeypatch):
+    monkeypatch.setattr(settings, "access_key", "s3cret")
+
+    assert client.get("/health").status_code == 200
+    assert client.get("/api/v1/stats").status_code == 401
+    assert (
+        client.get("/api/v1/stats", headers={"Authorization": "Bearer nope"}).status_code
+        == 401
+    )
+    assert (
+        client.get(
+            "/api/v1/stats", headers={"Authorization": "Bearer s3cret"}
+        ).status_code
+        == 200
+    )
+    assert (
+        client.get("/api/v1/stats", headers={"X-Api-Key": "s3cret"}).status_code == 200
+    )
+
+    preflight = client.options(
+        "/api/v1/stats",
+        headers={
+            "Origin": "https://breimato.es",
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "authorization",
+        },
+    )
+    assert preflight.status_code == 200
+    assert preflight.headers["access-control-allow-origin"] == "https://breimato.es"

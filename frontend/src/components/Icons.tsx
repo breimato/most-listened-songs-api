@@ -139,6 +139,51 @@ export function IconClock({ size = 20, className }: IconProps) {
   )
 }
 
+export function IconLock({ size = 20, className }: IconProps) {
+  return (
+    <svg {...svgProps(size, className)}>
+      <rect x="4.5" y="10" width="15" height="11" rx="2.5" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
+  )
+}
+
+export function IconKey({ size = 20, className }: IconProps) {
+  return (
+    <svg {...svgProps(size, className)}>
+      <circle cx="8" cy="15" r="4" />
+      <path d="m11 12 9-9M17 6l2.5 2.5M14 9l2 2" />
+    </svg>
+  )
+}
+
+export function IconEye({ size = 20, className }: IconProps) {
+  return (
+    <svg {...svgProps(size, className)}>
+      <path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+      <circle cx="12" cy="12" r="2.6" />
+    </svg>
+  )
+}
+
+export function IconEyeOff({ size = 20, className }: IconProps) {
+  return (
+    <svg {...svgProps(size, className)}>
+      <path d="M4 4l16 16M9.8 6.3A9.9 9.9 0 0 1 12 6c6 0 9.5 6 9.5 6a17 17 0 0 1-3.8 4.3M6.2 7.7A16.6 16.6 0 0 0 2.5 12S6 18 12 18a9.8 9.8 0 0 0 3.6-.7" />
+      <path d="M10.5 10.5a2.1 2.1 0 0 0 3 3" />
+    </svg>
+  )
+}
+
+export function IconLogout({ size = 20, className }: IconProps) {
+  return (
+    <svg {...svgProps(size, className)}>
+      <path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4" />
+      <path d="M10 12H3M7 8l-4 4 4 4" />
+    </svg>
+  )
+}
+
 export function Equalizer({ className }: { className?: string }) {
   return (
     <span className={`eq ${className ?? ''}`} aria-hidden="true">

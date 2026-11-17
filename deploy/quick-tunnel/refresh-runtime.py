@@ -56,6 +56,17 @@ def http(url: str, method: str = "GET", headers: dict[str, str] | None = None):
         return response.status, {k.lower(): v for k, v in response.headers.items()}, response.read()
 
 
+def read_access_key() -> str:
+    """Llave compartida de la API, leída del .env del proyecto."""
+    for candidate in (PROJECT_DIR.parent / ".env", PROJECT_DIR / ".env"):
+        if not candidate.exists():
+            continue
+        for line in candidate.read_text(encoding="utf-8").splitlines():
+            if line.startswith("ACCESS_KEY="):
+                return line.split("=", 1)[1].strip()
+    return os.environ.get("ACCESS_KEY", "").strip()
+
+
 def verify_backend(url: str) -> None:
     status, _, body = http(f"{url}/health")
     assert status == 200, f"/health devolvió {status}"
@@ -67,13 +78,15 @@ def verify_backend(url: str) -> None:
         headers={
             "Origin": ORIGIN,
             "Access-Control-Request-Method": "GET",
-            "Access-Control-Request-Headers": "content-type",
+            "Access-Control-Request-Headers": "authorization",
         },
     )
     assert status == 200, f"preflight devolvió {status}"
     assert headers.get("access-control-allow-origin") == ORIGIN, "CORS no permite breimato.es"
 
-    status, _, _ = http(f"{url}/api/v1/stats")
+    access_key = read_access_key()
+    auth = {"Authorization": f"Bearer {access_key}"} if access_key else {}
+    status, _, _ = http(f"{url}/api/v1/stats", headers=auth)
     assert status == 200, f"/api/v1/stats devolvió {status}"
 
 

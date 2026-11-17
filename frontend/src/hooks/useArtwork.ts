@@ -97,48 +97,6 @@ async function withSlot<T>(task: () => Promise<T>): Promise<T> {
   }
 }
 
-async function fromDeezer(artist: string, title: string): Promise<string | null> {
-  const query = encodeURIComponent(`${artist} ${title}`)
-  const data = await jsonp<{
-    data?: Array<{
-      title: string
-      artist: { name: string }
-      album: { cover_xl?: string; cover_big?: string; cover_medium?: string }
-    }>
-  }>(`https://api.deezer.com/search?q=${query}&limit=4`)
-  const hit = data.data?.find((item) =>
-    matches(item.artist.name, item.title, artist, title),
-  )
-  return hit?.album.cover_xl ?? hit?.album.cover_big ?? hit?.album.cover_medium ?? null
-}
-
-function jsonp<T>(url: string, timeoutMs = 8000): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const callback = `__coverJsonp_${Math.random().toString(36).slice(2)}`
-    const script = document.createElement('script')
-    const cleanup = () => {
-      delete (window as unknown as Record<string, unknown>)[callback]
-      script.remove()
-      window.clearTimeout(timer)
-    }
-    const timer = window.setTimeout(() => {
-      cleanup()
-      reject(new Error('jsonp timeout'))
-    }, timeoutMs)
-
-    ;(window as unknown as Record<string, unknown>)[callback] = (data: T) => {
-      cleanup()
-      resolve(data)
-    }
-    script.onerror = () => {
-      cleanup()
-      reject(new Error('jsonp error'))
-    }
-    script.src = `${url}${url.includes('?') ? '&' : '?'}output=jsonp&callback=${callback}`
-    document.head.appendChild(script)
-  })
-}
-
 async function fromItunes(artist: string, title: string): Promise<string | null> {
   const query = encodeURIComponent(`${artist} ${title}`)
   const response = await fetch(
@@ -168,16 +126,9 @@ async function resolveCover(artist: string, title: string): Promise<string | nul
   const task = withSlot(async () => {
     let url: string | null = null
     try {
-      url = await fromDeezer(artist, title)
+      url = await fromItunes(artist, title)
     } catch {
       url = null
-    }
-    if (!url) {
-      try {
-        url = await fromItunes(artist, title)
-      } catch {
-        url = null
-      }
     }
     loadStore()[key] = { url, ts: Date.now() }
     persistSoon()

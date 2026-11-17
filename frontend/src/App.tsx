@@ -18,6 +18,10 @@ import { buildRecaps, type RecapPeriod } from './utils/recaps'
 
 const READ_KEY = 'scrobbles:recaps-read:v1'
 
+interface AppProps {
+  onLock: () => void
+}
+
 function loadReadRecaps(): string[] {
   try {
     const raw = localStorage.getItem(READ_KEY)
@@ -27,7 +31,7 @@ function loadReadRecaps(): string[] {
   }
 }
 
-export default function App() {
+export default function App({ onLock }: AppProps) {
   const [tab, setTab] = useState<Tab>('songs')
   const [limit, setLimit] = useState(25)
   const [year, setYear] = useState('')
@@ -111,6 +115,7 @@ export default function App() {
           unread={unread}
           onOpenRecap={openRecap}
           onSyncMessage={showToast}
+          onLock={onLock}
         />
 
         <main className="main">

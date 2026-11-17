@@ -92,6 +92,19 @@ Swagger UI at `http://127.0.0.1:8000/docs`
 All query endpoints accept optional `since`, `until` (ISO datetime), and `limit`/`offset` parameters.
 `/songs/top` also accepts `artist` for filtering.
 
+### Acceso
+
+Todas las rutas `/api/v1/*` exigen la llave compartida `ACCESS_KEY` (en `.env`):
+
+```
+Authorization: Bearer <ACCESS_KEY>
+```
+
+Sin la llave devuelven `401`. `/health` queda público para las probes. La web
+pide la llave al entrar y la guarda en el navegador; el CronJob de Kubernetes
+la lee del Secret `access-key`. Si `ACCESS_KEY` está vacía, la autenticación se
+desactiva (solo para desarrollo local).
+
 ---
 
 ## How it works
@@ -118,7 +131,7 @@ Each `sync` only fetches scrobbles newer than the last stored play (the cursor i
 
 Interfaz web en `frontend/` (React + Vite + TypeScript):
 
-- **Top canciones** con ranking, portadas reales (Deezer/iTunes) y filtro por artista
+- **Top canciones** con ranking, portadas reales (iTunes) y filtro por artista
 - **Top artistas** con podio de vinilos y ranking completo
 - **Actividad** con gráficos por mes y por hora
 - **Recaps de temporada** (verano, otoño, invierno, primavera y año) con notificaciones in-app y copia del resumen

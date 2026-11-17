@@ -5,11 +5,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from canciones.adapters.db.repository import CancionesRepository
 from canciones.adapters.lastfm.api_ingestor import to_unix_timestamp
-from canciones.api.dependencies import get_repository
+from canciones.api.dependencies import get_repository, require_access_key
 from canciones.api.schemas import ArtistResponse, SongResponse, StatsResponse, SyncResponse
 from canciones.domain.models import Play
 
-router = APIRouter(prefix="/api/v1")
+router = APIRouter(
+    prefix="/api/v1",
+    dependencies=[Depends(require_access_key)],
+)
 
 
 @router.post("/sync", response_model=SyncResponse)

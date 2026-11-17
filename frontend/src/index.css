@@ -2182,6 +2182,229 @@ a {
   color: var(--text);
 }
 
+/* ── Access gate ─────────────────────────────────────────────── */
+
+.gate {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 24px;
+  overflow: hidden;
+  background:
+    radial-gradient(760px 460px at 50% -12%, rgba(30, 215, 96, 0.1), transparent 62%),
+    radial-gradient(520px 320px at 50% 112%, rgba(30, 215, 96, 0.05), transparent 65%),
+    var(--bg);
+}
+
+.gate__glow {
+  position: absolute;
+  top: -18%;
+  left: 50%;
+  width: min(900px, 120vw);
+  height: 520px;
+  background: radial-gradient(ellipse at center, rgba(30, 215, 96, 0.08), transparent 68%);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.gate__card {
+  position: relative;
+  width: min(420px, 100%);
+  padding: 30px 30px 26px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-xl);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-panel);
+  animation: gateIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes gateIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.gate__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gate__mark {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  width: 24px;
+  height: 24px;
+}
+
+.gate__mark i {
+  display: block;
+  width: 4px;
+  border-radius: 999px;
+  background: var(--green);
+}
+
+.gate__mark i:nth-child(1) {
+  height: 10px;
+}
+
+.gate__mark i:nth-child(2) {
+  height: 21px;
+}
+
+.gate__mark i:nth-child(3) {
+  height: 15px;
+}
+
+.gate__mark i:nth-child(4) {
+  height: 7px;
+}
+
+.gate__name {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.gate__sub {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.gate__lock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  margin-top: 30px;
+  border: 1px solid rgba(30, 215, 96, 0.24);
+  border-radius: 13px;
+  background: rgba(30, 215, 96, 0.1);
+  color: var(--green);
+}
+
+.gate__title {
+  margin-top: 16px;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.gate__lead {
+  margin-top: 8px;
+  color: var(--text-dim);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.gate__form {
+  margin-top: 22px;
+}
+
+.gate__field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 46px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #0c0c0e;
+  transition: border-color 0.16s ease;
+}
+
+.gate__field:focus-within {
+  border-color: rgba(30, 215, 96, 0.55);
+}
+
+.gate__field-icon {
+  position: absolute;
+  left: 13px;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.gate__field input {
+  width: 100%;
+  height: 100%;
+  padding: 0 44px 0 40px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  font-size: 13.5px;
+  outline: none;
+}
+
+.gate__field input::placeholder {
+  color: var(--text-faint);
+}
+
+.gate__reveal {
+  position: absolute;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+.gate__reveal:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text);
+}
+
+.gate__remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--text-faint);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.gate__remember input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--green);
+}
+
+.gate__error {
+  margin-top: 10px;
+  color: var(--error);
+  font-size: 12px;
+}
+
+.gate__submit {
+  width: 100%;
+  height: 44px;
+  margin-top: 16px;
+}
+
+.gate__foot {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--text-faint);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
 /* ── Mobile nav ──────────────────────────────────────────────── */
 
 .mobile-nav {
@@ -2454,6 +2677,18 @@ a {
     right: 12px;
     left: 12px;
     width: auto;
+  }
+
+  .gate {
+    padding: 16px;
+  }
+
+  .gate__card {
+    padding: 24px 22px 22px;
+  }
+
+  .gate__title {
+    font-size: 25px;
   }
 }
 

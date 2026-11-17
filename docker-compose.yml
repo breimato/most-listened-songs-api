@@ -27,6 +27,7 @@ services:
       DB_PASSWORD: canciones_pass
       LASTFM_API_KEY: ${LASTFM_API_KEY:-}
       LASTFM_USERNAME: ${LASTFM_USERNAME:-}
+      ACCESS_KEY: ${ACCESS_KEY:-}
       CORS_ORIGINS: http://127.0.0.1:5173,http://localhost:5173,https://breimato.es,https://www.breimato.es
     ports:
       - "8000:8000"

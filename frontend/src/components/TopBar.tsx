@@ -1,6 +1,7 @@
 import type { RecapPeriod } from '../utils/recaps'
 import { NotificationsBell } from './NotificationsBell'
 import { SyncButton } from './SyncButton'
+import { IconLogout } from './Icons'
 import type { Tab } from './Sidebar'
 
 interface TopBarProps {
@@ -9,6 +10,7 @@ interface TopBarProps {
   unread: number
   onOpenRecap: (recap: RecapPeriod) => void
   onSyncMessage: (message: string, type: 'success' | 'error') => void
+  onLock: () => void
 }
 
 const TAB_LABEL: Record<Tab, string> = {
@@ -17,7 +19,14 @@ const TAB_LABEL: Record<Tab, string> = {
   activity: 'Actividad',
 }
 
-export function TopBar({ tab, recaps, unread, onOpenRecap, onSyncMessage }: TopBarProps) {
+export function TopBar({
+  tab,
+  recaps,
+  unread,
+  onOpenRecap,
+  onSyncMessage,
+  onLock,
+}: TopBarProps) {
   return (
     <header className="topbar">
       <div className="topbar__context">
@@ -42,6 +51,15 @@ export function TopBar({ tab, recaps, unread, onOpenRecap, onSyncMessage }: TopB
           onOpenRecap={onOpenRecap}
         />
         <SyncButton onMessage={onSyncMessage} />
+        <button
+          type="button"
+          className="icon-btn icon-btn--lock"
+          onClick={onLock}
+          aria-label="Cerrar sesión"
+          title="Cerrar sesión"
+        >
+          <IconLogout size={18} />
+        </button>
       </div>
     </header>
   )

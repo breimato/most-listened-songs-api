@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     lastfm_api_key: str = ""
     lastfm_username: str = ""
 
+    # Llave compartida para proteger la API. Vacía = sin autenticación (solo local).
+    access_key: str = ""
+
     cors_origins: str = (
         "http://127.0.0.1:5173,http://localhost:5173,"
         "https://breimato.es,https://www.breimato.es"
