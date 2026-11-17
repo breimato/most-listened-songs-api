@@ -49,8 +49,21 @@ jobs:
           IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
           docker push "$IMAGE:$GITHUB_SHA"
 
+      - name: Check deployment token
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: deploy_token
+        env:
+          DEPLOY_REPO_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN }}
+        run: |
+          if [ -n "$DEPLOY_REPO_TOKEN" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::DEPLOY_REPO_TOKEN no configurado; la imagen se publicó pero cluster-config no se actualizó."
+          fi
+
       - name: Download deployment repository
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.DEPLOY_REPO_TOKEN != ''
+        if: steps.deploy_token.outputs.available == 'true'
         uses: actions/checkout@v4
         with:
           repository: breimato/cluster-config
@@ -58,7 +71,7 @@ jobs:
           path: deployment
 
       - name: Update deployment image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.DEPLOY_REPO_TOKEN != ''
+        if: steps.deploy_token.outputs.available == 'true'
         working-directory: deployment
         run: |
           IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}:$GITHUB_SHA"
@@ -76,7 +89,3 @@ jobs:
             git commit -m "Deploy Youtube $GITHUB_SHA"
             git push
           fi
-
-      - name: Deploy token missing
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.DEPLOY_REPO_TOKEN == ''
-        run: echo "::warning::DEPLOY_REPO_TOKEN no configurado; la imagen se publicó pero cluster-config no se actualizó."
