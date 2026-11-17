@@ -33,6 +33,7 @@ Last.fm actúa como agregador único de todos los dispositivos; la app añade un
 - Sincronización manual desde la UI.
 - Acceso protegido por una llave compartida: `/api/v1/*` exige `Authorization: Bearer`.
 - Obsesiones y rachas: episodios de escucha intensiva con timeline diario y calendario de calor.
+- Recap tipo Wrapped: horas, días, rachas, top canciones/artistas/álbumes, géneros aproximados, perfil y momentos.
 - Recaps por temporadas (verano, año, etc.) con notificaciones in-app; se calculan con rangos `since`/`until` de la API.
 - Carátulas reales vía iTunes Search API (sin clave, con caché en el navegador); fallback generado si no hay coincidencia.
 - Datos reales: ~12.900 reproducciones. No inventar cifras, testimonios ni capacidades.

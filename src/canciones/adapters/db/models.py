@@ -14,6 +14,7 @@ class SongDB(Base):
     title = Column(String(500), nullable=False)
     artist = Column(String(500), default="")
     album = Column(String(500), default="")
+    duration_seconds = Column(Integer, nullable=True)
 
     plays = relationship("PlayDB", back_populates="song")
 

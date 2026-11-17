@@ -208,3 +208,54 @@ def test_obsessions_and_song_timeline(client, db_session):
 
     missing = client.get("/api/v1/songs/999999/timeline")
     assert missing.status_code == 404
+
+
+def test_recap_endpoint(client, db_session):
+    song = _add_song(db_session, "joe|closer", "Closer", "Joe Inoue", "Closer")
+    song.duration_seconds = 180
+    for day in range(1, 8):
+        for hour in range(2):
+            _add_play(db_session, song, datetime(2026, 6, day, 10 + hour))
+    db_session.commit()
+
+    response = client.get(
+        "/api/v1/recap",
+        params={
+            "since": "2026-06-01T00:00:00",
+            "until": "2026-06-07T23:59:59",
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_plays"] == 14
+    assert data["total_minutes"] == 42
+    assert data["total_hours"] == 0.7
+    assert data["duration_coverage"] == 1.0
+    assert data["top_song"]["title"] == "Closer"
+    assert data["top_song"]["days"] == 7
+    assert data["top_song_longest_streak"] == 7
+    assert data["top_artists"][0]["artist"] == "Joe Inoue"
+    assert data["top_albums"][0]["album"] == "Closer"
+    assert data["profile"]["key"] == "loopero"
+    assert data["top_genres"] == []
+    assert data["first_play"].startswith("2026-06-01")
+
+
+def test_artwork_endpoint(client, monkeypatch):
+    from canciones.api import router as router_module
+
+    monkeypatch.setattr(
+        router_module,
+        "find_cover",
+        lambda artist, title: "https://example.com/cover.jpg",
+    )
+    response = client.get(
+        "/api/v1/artwork", params={"artist": "Joe Inoue", "title": "Closer"}
+    )
+    assert response.status_code == 200
+    assert response.json() == {"url": "https://example.com/cover.jpg"}
+
+    monkeypatch.setattr(router_module, "find_cover", lambda artist, title: None)
+    response = client.get("/api/v1/artwork", params={"artist": "Desconocido"})
+    assert response.status_code == 200
+    assert response.json() == {"url": None}

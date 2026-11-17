@@ -315,7 +315,13 @@ export default function App({ onLock }: AppProps) {
         <MobileNav tab={tab} onTab={setTab} />
       </div>
 
-      {recapOpen ? <RecapModal recap={recapOpen} onClose={() => setRecapOpen(null)} /> : null}
+      {recapOpen ? (
+        <RecapModal
+          recap={recapOpen}
+          onClose={() => setRecapOpen(null)}
+          onOpenObsession={openObsession}
+        />
+      ) : null}
 
       {timeline ? (
         <SongTimelineModal

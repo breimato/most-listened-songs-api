@@ -1,0 +1,86 @@
+"""Búsqueda de carátulas en Deezer desde el servidor (sin CORS ni scripts de terceros)."""
+
+import json
+import re
+import time
+import unicodedata
+import urllib.parse
+import urllib.request
+
+_API = "https://api.deezer.com/search"
+_UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/130 Safari/537.36"
+_CACHE: dict[str, tuple[float, str | None]] = {}
+_TTL = 60 * 60 * 24 * 30
+_MAX_ENTRIES = 2000
+
+
+def _normalize(value: str) -> str:
+    value = unicodedata.normalize("NFD", (value or "").lower())
+    value = "".join(ch for ch in value if not unicodedata.combining(ch))
+    value = re.sub(r"[^a-z0-9 ]", " ", value)
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def _overlap(left: str, right: str) -> float:
+    a = set(_normalize(left).split())
+    b = set(_normalize(right).split())
+    if not a or not b:
+        return 0
+    return len(a & b) / max(len(a), len(b))
+
+
+def _match(candidate_artist, candidate_title, artist, title) -> bool:
+    artist_ok = (
+        _overlap(candidate_artist, artist) >= 0.6
+        or _normalize(artist) in _normalize(candidate_artist)
+        or _normalize(candidate_artist) in _normalize(artist)
+    )
+    title_ok = (
+        _overlap(candidate_title, title) >= 0.6
+        or _normalize(candidate_title) == _normalize(title)
+        or _normalize(candidate_title).startswith(_normalize(title))
+    )
+    return bool(artist_ok and title_ok)
+
+
+def find_cover(artist: str, title: str) -> str | None:
+    key = f"{_normalize(artist)}|{_normalize(title)}"
+    if not key.strip("|"):
+        return None
+
+    cached = _CACHE.get(key)
+    if cached:
+        ttl = _TTL if cached[1] else 60 * 60 * 6
+        if time.time() - cached[0] < ttl:
+            return cached[1]
+
+    url = None
+    try:
+        query = urllib.parse.urlencode({"q": f"{artist} {title}", "limit": 5})
+        request = urllib.request.Request(
+            f"{_API}?{query}", headers={"User-Agent": _UA}
+        )
+        with urllib.request.urlopen(request, timeout=15) as response:
+            data = json.loads(response.read().decode("utf-8"))
+        for item in data.get("data", []):
+            if _match(
+                item.get("artist", {}).get("name", ""),
+                item.get("title", ""),
+                artist,
+                title,
+            ):
+                album = item.get("album", {})
+                url = (
+                    album.get("cover_xl")
+                    or album.get("cover_big")
+                    or album.get("cover_medium")
+                )
+                if url:
+                    break
+    except Exception:
+        url = None
+
+    if len(_CACHE) > _MAX_ENTRIES:
+        _CACHE.clear()
+    _CACHE[key] = (time.time(), url)
+    return url

@@ -62,6 +62,8 @@ invierno `#5b8def → #25346b`, primavera `#3ddc84 → #0f7a43`, año
 - **Toast**: aviso de sincronización con punto de color y cierre.
 - **Puerta de acceso**: pantalla de desbloqueo con la marca, campo de llave con mostrar/ocultar, opción de recordar y estado de error.
 - **Obsesiones**: lista de episodios (obsesión/racha) con portada, periodo, días fuertes, plays, pico y mini-heatmap; timeline modal con calendario de calor diario y episodios.
+- **Recap Wrapped**: hero con horas/plays/artistas, rejilla de métricas, canción y artista del periodo, top 5 canciones/artistas/álbumes, géneros, momentos, obsesión, perfil y artista mes a mes.
+- **Carátulas**: resueltas en el backend (Deezer) y servidas como URL; el navegador solo carga la imagen, sin scripts de terceros.
 
 ## Movimiento
 

@@ -39,6 +39,13 @@ export function useSongTimeline(songId: number | null) {
   })
 }
 
+export function useRecap(range: RangeParams) {
+  return useQuery({
+    queryKey: ['recap', range],
+    queryFn: () => api.getRecap(range),
+  })
+}
+
 export function useSync() {
   const queryClient = useQueryClient()
 

@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 
-const STORAGE_KEY = 'scrobbles:covers:v1'
+import { getAccessKey } from '../services/auth'
+import { getApiBaseUrl } from '../services/runtimeConfig'
+
+const STORAGE_KEY = 'scrobbles:covers:v2'
 const MAX_ENTRIES = 500
 const MAX_CONCURRENT = 4
 
@@ -45,42 +48,6 @@ function keyFor(artist: string, title: string): string {
   return `${artist.trim().toLowerCase()}|${title.trim().toLowerCase()}`
 }
 
-function normalize(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9 ]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function tokens(value: string): Set<string> {
-  return new Set(normalize(value).split(' ').filter(Boolean))
-}
-
-function overlap(a: string, b: string): number {
-  const left = tokens(a)
-  const right = tokens(b)
-  if (!left.size || !right.size) return 0
-  let shared = 0
-  for (const token of left) {
-    if (right.has(token)) shared += 1
-  }
-  return shared / Math.max(left.size, right.size)
-}
-
-function matches(candidateArtist: string, candidateTitle: string, artist: string, title: string): boolean {
-  const artistMatch =
-    overlap(candidateArtist, artist) >= 0.6 ||
-    normalize(candidateArtist).includes(normalize(artist)) ||
-    normalize(artist).includes(normalize(candidateArtist))
-  const titleMatch =
-    overlap(candidateTitle, title) >= 0.6 ||
-    normalize(candidateTitle) === normalize(title)
-  return artistMatch && titleMatch
-}
-
 let active = 0
 const waiting: Array<() => void> = []
 
@@ -97,19 +64,19 @@ async function withSlot<T>(task: () => Promise<T>): Promise<T> {
   }
 }
 
-async function fromItunes(artist: string, title: string): Promise<string | null> {
-  const query = encodeURIComponent(`${artist} ${title}`)
+async function fromApi(artist: string, title: string): Promise<string | null> {
+  const params = new URLSearchParams({ artist, title })
+  const headers = new Headers()
+  const key = getAccessKey()
+  if (key) headers.set('Authorization', `Bearer ${key}`)
+
   const response = await fetch(
-    `https://itunes.apple.com/search?term=${query}&entity=song&limit=3&country=ES`,
+    `${getApiBaseUrl()}/api/v1/artwork?${params.toString()}`,
+    { headers },
   )
   if (!response.ok) return null
-  const data = (await response.json()) as {
-    results?: Array<{ trackName: string; artistName: string; artworkUrl100?: string }>
-  }
-  const hit = data.results?.find((item) =>
-    matches(item.artistName, item.trackName, artist, title),
-  )
-  return hit?.artworkUrl100?.replace('100x100bb', '600x600bb') ?? null
+  const data = (await response.json()) as { url?: string | null }
+  return data.url ?? null
 }
 
 const inflight = new Map<string, Promise<string | null>>()
@@ -117,8 +84,9 @@ const inflight = new Map<string, Promise<string | null>>()
 async function resolveCover(artist: string, title: string): Promise<string | null> {
   const key = keyFor(artist, title)
   const cached = loadStore()[key]
-  if (cached && Date.now() - cached.ts < 1000 * 60 * 60 * 24 * 60) {
-    return cached.url
+  if (cached) {
+    const ttl = cached.url ? 1000 * 60 * 60 * 24 * 60 : 1000 * 60 * 60 * 24
+    if (Date.now() - cached.ts < ttl) return cached.url
   }
   const running = inflight.get(key)
   if (running) return running
@@ -126,7 +94,7 @@ async function resolveCover(artist: string, title: string): Promise<string | nul
   const task = withSlot(async () => {
     let url: string | null = null
     try {
-      url = await fromItunes(artist, title)
+      url = await fromApi(artist, title)
     } catch {
       url = null
     }

@@ -32,6 +32,7 @@ class PlayRecord:
     artist: str
     album: str
     played_at: datetime
+    duration_seconds: int | None = None
 
 
 @dataclass

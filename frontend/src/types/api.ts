@@ -68,3 +68,89 @@ export interface SongTimeline {
   first_listen: string | null
   last_listen: string | null
 }
+
+export interface RecapSong {
+  song_id: number
+  title: string
+  artist: string
+  album: string
+  plays: number
+  minutes: number
+  share: number
+  days: number
+  longest_streak: number
+}
+
+export interface RecapArtist {
+  artist: string
+  plays: number
+  minutes: number
+  share: number
+  songs: number
+  top_song: string | null
+  top_song_id: number | null
+}
+
+export interface RecapAlbum {
+  album: string
+  artist: string
+  plays: number
+  minutes: number
+  top_song: string
+  top_song_id: number
+}
+
+export interface RecapGenre {
+  name: string
+  weight: number
+  share: number
+}
+
+export interface RecapMonthlyArtist {
+  month: string
+  artist: string
+  plays: number
+}
+
+export interface RecapProfile {
+  key: string
+  label: string
+  description: string
+}
+
+export interface Recap {
+  since: string
+  until: string
+  period_days: number
+  total_plays: number
+  total_minutes: number
+  total_hours: number
+  estimated_minutes: number
+  estimated_hours: number
+  duration_coverage: number
+  unique_songs: number
+  unique_artists: number
+  unique_albums: number
+  days_listened: number
+  longest_streak: number
+  top_day: string | null
+  top_day_plays: number
+  top_hour: number | null
+  top_hour_plays: number
+  first_play: string | null
+  first_song: string | null
+  first_song_id: number | null
+  last_play: string | null
+  last_song: string | null
+  last_song_id: number | null
+  top_song: RecapSong | null
+  top_song_days: number
+  top_song_longest_streak: number
+  top_songs: RecapSong[]
+  top_artists: RecapArtist[]
+  top_albums: RecapAlbum[]
+  top_genres: RecapGenre[]
+  monthly_top_artists: RecapMonthlyArtist[]
+  top_obsession: Obsession | null
+  profile: RecapProfile
+}

@@ -1,26 +1,61 @@
+import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 
-import { useEffect, useRef, useState } from 'react'
-
-import { useTopArtists, useTopSongs, useStats } from '../hooks/useCanciones'
+import { useRecap } from '../hooks/useCanciones'
+import type { Obsession, Recap } from '../types/api'
 import type { RecapPeriod } from '../utils/recaps'
-import { formatNumber } from '../utils/format'
+import {
+  formatDate,
+  formatDayLong,
+  formatDayRange,
+  formatNumber,
+  hourLabel,
+} from '../utils/format'
 import { CoverArt } from './CoverArt'
-import { IconCheck, IconClose, IconCopy } from './Icons'
+import { IconCheck, IconClose, IconCopy, IconFlame, IconSparkle } from './Icons'
 
 interface RecapModalProps {
   recap: RecapPeriod
   onClose: () => void
+  onOpenObsession?: (obsession: Obsession) => void
 }
 
-export function RecapModal({ recap, onClose }: RecapModalProps) {
+const TIER_LABEL = {
+  obsesion: 'Obsesión',
+  racha: 'Racha',
+} as const
+
+function formatHours(hours: number): string {
+  if (hours < 1) return `${Math.round(hours * 60)} min`
+  const rounded = Math.round(hours * 10) / 10
+  return `${new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(rounded)} h`
+}
+
+function formatMinutes(minutes: number): string {
+  if (!minutes) return '—'
+  if (minutes < 60) return `${minutes} min`
+  const hours = minutes / 60
+  return `${new Intl.NumberFormat('es-ES', {
+    maximumFractionDigits: hours >= 10 ? 0 : 1,
+  }).format(hours)} h`
+}
+
+function monthLabel(value: string): string {
+  const [year, month] = value.split('-')
+  return new Intl.DateTimeFormat('es-ES', { month: 'short' })
+    .format(new Date(Number(year), Number(month) - 1, 1))
+    .replace('.', '')
+}
+
+function pct(value: number): string {
+  return `${Math.round(value * 100)}%`
+}
+
+export function RecapModal({ recap, onClose, onOpenObsession }: RecapModalProps) {
   const closeRef = useRef<HTMLButtonElement>(null)
   const [copied, setCopied] = useState(false)
-
-  const range = { since: recap.since, until: recap.until }
-  const songsQuery = useTopSongs({ limit: 6, ...range })
-  const artistsQuery = useTopArtists(1, range)
-  const statsQuery = useStats(range)
+  const query = useRecap({ since: recap.since, until: recap.until })
+  const data: Recap | undefined = query.data
 
   useEffect(() => {
     closeRef.current?.focus()
@@ -38,27 +73,45 @@ export function RecapModal({ recap, onClose }: RecapModalProps) {
     }
   }, [onClose])
 
-  const songs = songsQuery.data ?? []
-  const topArtist = artistsQuery.data?.[0]
-  const totalPlays = statsQuery.data?.total_plays
+  const hours = data
+    ? data.duration_coverage >= 0.9
+      ? data.total_hours
+      : data.estimated_hours
+    : 0
+  const approximate = Boolean(data && data.duration_coverage < 0.9)
 
   const copySummary = async () => {
+    if (!data) return
+    const topSong = data.top_song
+    const topArtist = data.top_artists[0]
     const lines = [
       `${recap.title} · ${recap.label}`,
       recap.range,
       '',
-      ...songs.map(
-        (song, index) =>
-          `${index + 1}. ${song.title} — ${song.artist} (${formatNumber(song.plays)})`,
-      ),
-    ]
-    const text = lines.join('\n')
+      approximate ? `≈ ${formatHours(hours)} de música` : `${formatHours(hours)} de música`,
+      `${formatNumber(data.total_plays)} reproducciones · ${formatNumber(data.unique_artists)} artistas · ${formatNumber(data.unique_songs)} canciones`,
+      `${data.days_listened} días con música · racha de ${data.longest_streak} días`,
+      '',
+      topSong
+        ? `Canción: ${topSong.title} — ${topSong.artist} (${formatNumber(topSong.plays)} plays, ${topSong.days} días)`
+        : '',
+      topArtist
+        ? `Artista: ${topArtist.artist} (${formatNumber(topArtist.plays)} plays)`
+        : '',
+      data.top_albums[0]
+        ? `Álbum: ${data.top_albums[0].album} — ${data.top_albums[0].artist}`
+        : '',
+      data.top_genres.length
+        ? `Géneros: ${data.top_genres.map((genre) => genre.name).join(', ')}`
+        : '',
+      `Perfil: ${data.profile.label}`,
+    ].filter(Boolean)
 
     try {
-      await navigator.clipboard.writeText(text)
+      await navigator.clipboard.writeText(lines.join('\n'))
     } catch {
       const area = document.createElement('textarea')
-      area.value = text
+      area.value = lines.join('\n')
       document.body.appendChild(area)
       area.select()
       document.execCommand('copy')
@@ -106,55 +159,347 @@ export function RecapModal({ recap, onClose }: RecapModalProps) {
             {recap.label} · {recap.range}
           </p>
 
-          <div className="recap-hero__stats">
-            <span>
-              <strong>{totalPlays !== undefined ? formatNumber(totalPlays) : '—'}</strong>{' '}
-              reproducciones
+          <div className="recap-hero__figures">
+            <span className="recap-figure">
+              <strong>{approximate ? '≈ ' : ''}{formatHours(hours)}</strong>
+              <span>de música</span>
             </span>
-            {topArtist ? (
-              <span>
-                <strong>{topArtist.artist}</strong> fue tu artista
-              </span>
-            ) : null}
+            <span className="recap-figure">
+              <strong>{data ? formatNumber(data.total_plays) : '—'}</strong>
+              <span>reproducciones</span>
+            </span>
+            <span className="recap-figure">
+              <strong>{data ? formatNumber(data.unique_artists) : '—'}</strong>
+              <span>artistas</span>
+            </span>
           </div>
+
+          {approximate ? (
+            <p className="recap-hero__note">
+              Calculado con el {pct(data?.duration_coverage ?? 0)} de las
+              duraciones conocidas; el resto es una estimación.
+            </p>
+          ) : null}
         </header>
 
         <div className="recap-body">
-          <h3>Tus canciones</h3>
-
-          {songsQuery.isLoading ? (
-            <ol className="recap-songs" aria-busy="true">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <li key={index} className="recap-song">
-                  <span className="skeleton skeleton--rank" />
-                  <span className="skeleton skeleton--cover" />
-                  <span className="skeleton skeleton--title" />
-                </li>
-              ))}
-            </ol>
-          ) : songs.length ? (
-            <ol className="recap-songs">
-              {songs.map((song, index) => (
-                <li key={song.id} className="recap-song">
-                  <span className="recap-song__rank">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <CoverArt artist={song.artist} title={song.title} size="sm" />
-                  <span className="recap-song__text">
-                    <span className="recap-song__title">{song.title}</span>
-                    <span className="recap-song__artist">{song.artist}</span>
-                  </span>
-                  <span className="recap-song__plays">{formatNumber(song.plays)}</span>
-                </li>
-              ))}
-            </ol>
+          {query.isLoading ? (
+            <div className="recap-loading" aria-busy="true">
+              <span className="skeleton skeleton--chart" />
+              <span className="skeleton skeleton--chart" />
+            </div>
+          ) : query.isError || !data ? (
+            <div className="state">
+              <p className="state__title">No se pudo calcular el recap</p>
+              <p className="state__copy">Vuelve a intentarlo en un momento.</p>
+            </div>
           ) : (
-            <p className="state__copy">No hay scrobbles en este periodo.</p>
+            <>
+              <dl className="recap-stats">
+                <div>
+                  <dt>Horas de música</dt>
+                  <dd>
+                    {approximate ? '≈ ' : ''}
+                    {formatHours(hours)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Reproducciones</dt>
+                  <dd>{formatNumber(data.total_plays)}</dd>
+                </div>
+                <div>
+                  <dt>Artistas</dt>
+                  <dd>{formatNumber(data.unique_artists)}</dd>
+                </div>
+                <div>
+                  <dt>Canciones</dt>
+                  <dd>{formatNumber(data.unique_songs)}</dd>
+                </div>
+                <div>
+                  <dt>Días con música</dt>
+                  <dd>{data.days_listened}</dd>
+                </div>
+                <div>
+                  <dt>Racha más larga</dt>
+                  <dd>{data.longest_streak} días</dd>
+                </div>
+              </dl>
+
+              {data.top_song ? (
+                <section className="recap-section">
+                  <h3>Tu canción del periodo</h3>
+                  <div className="recap-feature">
+                    <CoverArt
+                      artist={data.top_song.artist}
+                      title={data.top_song.title}
+                      size="lg"
+                    />
+                    <div className="recap-feature__text">
+                      <p className="recap-feature__title">{data.top_song.title}</p>
+                      <p className="recap-feature__artist">{data.top_song.artist}</p>
+                      {data.top_song.album ? (
+                        <p className="recap-feature__album">{data.top_song.album}</p>
+                      ) : null}
+                      <p className="recap-feature__line">
+                        La escuchaste <strong>{data.top_song.days} días</strong>, con
+                        una racha de{' '}
+                        <strong>{data.top_song.longest_streak} días seguidos</strong>.
+                      </p>
+                      <div className="recap-chips">
+                        <span>{formatNumber(data.top_song.plays)} plays</span>
+                        <span>{formatMinutes(data.top_song.minutes)}</span>
+                        <span>{pct(data.top_song.share)} del periodo</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              ) : null}
+
+              {data.top_artists[0] ? (
+                <section className="recap-section">
+                  <h3>Tu artista del periodo</h3>
+                  <div className="recap-feature recap-feature--artist">
+                    <CoverArt
+                      artist={data.top_artists[0].artist}
+                      title={data.top_artists[0].top_song ?? ''}
+                      size="lg"
+                      round
+                    />
+                    <div className="recap-feature__text">
+                      <p className="recap-feature__title">
+                        {data.top_artists[0].artist}
+                      </p>
+                      <p className="recap-feature__line">
+                        {formatNumber(data.top_artists[0].plays)} reproducciones ·{' '}
+                        {formatMinutes(data.top_artists[0].minutes)} ·{' '}
+                        {pct(data.top_artists[0].share)} de tu música
+                      </p>
+                      {data.top_artists[0].top_song ? (
+                        <p className="recap-feature__album">
+                          Tu canción: {data.top_artists[0].top_song}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                </section>
+              ) : null}
+
+              <section className="recap-section">
+                <h3>Top 5 canciones</h3>
+                <ol className="recap-rows">
+                  {data.top_songs.map((song, index) => (
+                    <li key={song.song_id} className="recap-row">
+                      <span className="recap-row__rank">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                      <CoverArt artist={song.artist} title={song.title} size="sm" />
+                      <span className="recap-row__main">
+                        <span className="recap-row__title">{song.title}</span>
+                        <span className="recap-row__meta">
+                          {song.artist} · {song.days} días
+                        </span>
+                      </span>
+                      <span className="recap-row__stats">
+                        <strong>{formatNumber(song.plays)}</strong> plays
+                        <span>{formatMinutes(song.minutes)}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+
+              <section className="recap-section">
+                <h3>Top 5 artistas</h3>
+                <ol className="recap-rows">
+                  {data.top_artists.map((artist, index) => (
+                    <li key={artist.artist} className="recap-row">
+                      <span className="recap-row__rank">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                      <CoverArt
+                        artist={artist.artist}
+                        title={artist.top_song ?? ''}
+                        size="sm"
+                        round
+                      />
+                      <span className="recap-row__main">
+                        <span className="recap-row__title">{artist.artist}</span>
+                        <span className="recap-row__meta">
+                          {formatMinutes(artist.minutes)} · {pct(artist.share)}
+                        </span>
+                      </span>
+                      <span className="recap-row__stats">
+                        <strong>{formatNumber(artist.plays)}</strong> plays
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+
+              {data.top_albums.length ? (
+                <section className="recap-section">
+                  <h3>Top 5 álbumes</h3>
+                  <ol className="recap-rows">
+                    {data.top_albums.map((album, index) => (
+                      <li key={`${album.album}-${album.artist}`} className="recap-row">
+                        <span className="recap-row__rank">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                        <CoverArt
+                          artist={album.artist}
+                          title={album.top_song}
+                          size="sm"
+                        />
+                        <span className="recap-row__main">
+                          <span className="recap-row__title">{album.album}</span>
+                          <span className="recap-row__meta">{album.artist}</span>
+                        </span>
+                        <span className="recap-row__stats">
+                          <strong>{formatNumber(album.plays)}</strong> plays
+                          <span>{formatMinutes(album.minutes)}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              ) : null}
+
+              {data.top_genres.length ? (
+                <section className="recap-section">
+                  <h3>Tus géneros</h3>
+                  <div className="recap-genres">
+                    {data.top_genres.map((genre) => (
+                      <span key={genre.name} className="recap-genre">
+                        <span className="recap-genre__name">{genre.name}</span>
+                        <span className="recap-genre__bar" aria-hidden="true">
+                          <i style={{ width: `${Math.max(4, genre.share * 100)}%` }} />
+                        </span>
+                        <span className="recap-genre__share">{pct(genre.share)}</span>
+                      </span>
+                    ))}
+                  </div>
+                  <p className="recap-note">Según los tags de artista de Last.fm.</p>
+                </section>
+              ) : null}
+
+              <section className="recap-section">
+                <h3>Momentos</h3>
+                <dl className="recap-facts">
+                  <div>
+                    <dt>Día más musical</dt>
+                    <dd>{data.top_day ? formatDayLong(data.top_day) : '—'}</dd>
+                    <span>{data.top_day_plays} reproducciones</span>
+                  </div>
+                  <div>
+                    <dt>Hora favorita</dt>
+                    <dd>
+                      {data.top_hour !== null ? hourLabel(data.top_hour) : '—'}
+                    </dd>
+                    <span>{data.top_hour_plays} reproducciones</span>
+                  </div>
+                  <div>
+                    <dt>Primera canción</dt>
+                    <dd>{data.first_song ?? '—'}</dd>
+                    <span>{formatDate(data.first_play)}</span>
+                  </div>
+                  <div>
+                    <dt>Última canción</dt>
+                    <dd>{data.last_song ?? '—'}</dd>
+                    <span>{formatDate(data.last_play)}</span>
+                  </div>
+                </dl>
+              </section>
+
+              {data.top_obsession ? (
+                <section className="recap-section">
+                  <h3>Tu obsesión del periodo</h3>
+                  <div className="recap-obsession">
+                    <CoverArt
+                      artist={data.top_obsession.artist}
+                      title={data.top_obsession.title}
+                      size="sm"
+                    />
+                    <div className="recap-obsession__body">
+                      <span className="recap-obsession__title">
+                        {data.top_obsession.title}
+                      </span>
+                      <span className="recap-obsession__meta">
+                        {data.top_obsession.artist} ·{' '}
+                        {formatDayRange(
+                          data.top_obsession.start,
+                          data.top_obsession.end,
+                        )}{' '}
+                        · {data.top_obsession.strong_days}/
+                        {data.top_obsession.span_days} días ·{' '}
+                        {formatNumber(data.top_obsession.plays)} plays
+                      </span>
+                    </div>
+                    <span
+                      className={`tier-badge tier-badge--${data.top_obsession.tier}`}
+                    >
+                      <IconFlame size={11} />
+                      {TIER_LABEL[data.top_obsession.tier]}
+                    </span>
+                    {onOpenObsession ? (
+                      <button
+                        type="button"
+                        className="btn btn--ghost recap-obsession__button"
+                        onClick={() => {
+                          onClose()
+                          onOpenObsession(data.top_obsession as Obsession)
+                        }}
+                      >
+                        Ver historial
+                      </button>
+                    ) : null}
+                  </div>
+                </section>
+              ) : null}
+
+              <section className="recap-section">
+                <h3>Tu perfil</h3>
+                <div className="recap-profile">
+                  <span className="recap-profile__icon" aria-hidden="true">
+                    <IconSparkle size={20} />
+                  </span>
+                  <div>
+                    <p className="recap-profile__label">{data.profile.label}</p>
+                    <p className="recap-profile__description">
+                      {data.profile.description}
+                    </p>
+                  </div>
+                </div>
+                <p className="recap-note">
+                  Perfil calculado con tus hábitos de escucha, no con géneros.
+                </p>
+              </section>
+
+              {data.monthly_top_artists.length ? (
+                <section className="recap-section">
+                  <h3>Tu artista, mes a mes</h3>
+                  <div className="recap-months">
+                    {data.monthly_top_artists.map((month) => (
+                      <span key={month.month} className="recap-month">
+                        <span className="recap-month__label">
+                          {monthLabel(month.month)}
+                        </span>
+                        <span className="recap-month__artist">{month.artist}</span>
+                      </span>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+            </>
           )}
         </div>
 
         <footer className="recap-foot">
-          <button type="button" className="btn btn--ghost" onClick={copySummary}>
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={copySummary}
+            disabled={!data}
+          >
             {copied ? <IconCheck size={17} /> : <IconCopy size={17} />}
             {copied ? 'Copiado' : 'Copiar resumen'}
           </button>

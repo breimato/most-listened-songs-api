@@ -1,6 +1,7 @@
 import type {
   Artist,
   Obsession,
+  Recap,
   Song,
   SongTimeline,
   Stats,
@@ -111,6 +112,10 @@ export const api = {
     return request<SongTimeline>(
       `/songs/${songId}/timeline${buildQuery(rangeQuery(range))}`,
     )
+  },
+
+  getRecap(range: RangeParams = {}) {
+    return request<Recap>(`/recap${buildQuery(rangeQuery(range))}`)
   },
 
   sync() {

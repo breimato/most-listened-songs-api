@@ -36,6 +36,7 @@ class CancionesRepository:
             SongDB.title,
             SongDB.artist,
             SongDB.album,
+            SongDB.duration_seconds,
             PlayDB.played_at,
         ).join(PlayDB, PlayDB.song_id == SongDB.id)
 
@@ -51,6 +52,7 @@ class CancionesRepository:
                 artist=row.artist,
                 album=row.album,
                 played_at=row.played_at,
+                duration_seconds=row.duration_seconds,
             )
             for row in query.all()
         ]

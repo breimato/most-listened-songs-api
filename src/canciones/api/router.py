@@ -6,13 +6,23 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from canciones.adapters.artwork import find_cover
 from canciones.adapters.db.repository import CancionesRepository
 from canciones.adapters.lastfm.api_ingestor import to_unix_timestamp
+from canciones.adapters.lastfm.tags import build_genres
 from canciones.api.dependencies import get_repository, require_access_key
 from canciones.api.schemas import (
     ArtistResponse,
+    ArtworkResponse,
     ObsessionDayResponse,
     ObsessionResponse,
+    RecapAlbumResponse,
+    RecapArtistResponse,
+    RecapGenreResponse,
+    RecapMonthlyArtistResponse,
+    RecapProfileResponse,
+    RecapResponse,
+    RecapSongResponse,
     SongResponse,
     SongTimelineResponse,
     StatsResponse,
@@ -22,6 +32,7 @@ from canciones.config import settings
 from canciones.domain.models import Play
 from canciones.domain.normalization import normalized_key
 from canciones.domain.obsessions import ObsessionEpisode, detect_obsessions, local_date
+from canciones.domain.recap import Recap, build_recap
 
 router = APIRouter(
     prefix="/api/v1",
@@ -144,6 +155,123 @@ def _episode_response(episode: ObsessionEpisode) -> ObsessionResponse:
             for day, plays in episode.days
         ],
     )
+
+
+def _recap_response(recap: Recap, genres: list[dict]) -> RecapResponse:
+    def song(item) -> RecapSongResponse:
+        return RecapSongResponse(
+            song_id=item.song_id,
+            title=item.title,
+            artist=item.artist,
+            album=item.album,
+            plays=item.plays,
+            minutes=item.minutes,
+            share=item.share,
+            days=item.days,
+            longest_streak=item.longest_streak,
+        )
+
+    return RecapResponse(
+        since=recap.since,
+        until=recap.until,
+        period_days=recap.period_days,
+        total_plays=recap.total_plays,
+        total_minutes=recap.total_minutes,
+        total_hours=recap.total_hours,
+        estimated_minutes=recap.estimated_minutes,
+        estimated_hours=recap.estimated_hours,
+        duration_coverage=recap.duration_coverage,
+        unique_songs=recap.unique_songs,
+        unique_artists=recap.unique_artists,
+        unique_albums=recap.unique_albums,
+        days_listened=recap.days_listened,
+        longest_streak=recap.longest_streak,
+        top_day=recap.top_day,
+        top_day_plays=recap.top_day_plays,
+        top_hour=recap.top_hour,
+        top_hour_plays=recap.top_hour_plays,
+        first_play=recap.first_play,
+        first_song=recap.first_song,
+        first_song_id=recap.first_song_id,
+        last_play=recap.last_play,
+        last_song=recap.last_song,
+        last_song_id=recap.last_song_id,
+        top_song=song(recap.top_song) if recap.top_song else None,
+        top_song_days=recap.top_song_days,
+        top_song_longest_streak=recap.top_song_longest_streak,
+        top_songs=[song(item) for item in recap.top_songs],
+        top_artists=[
+            RecapArtistResponse(
+                artist=item.artist,
+                plays=item.plays,
+                minutes=item.minutes,
+                share=item.share,
+                songs=item.songs,
+                top_song=item.top_song,
+                top_song_id=item.top_song_id,
+            )
+            for item in recap.top_artists
+        ],
+        top_albums=[
+            RecapAlbumResponse(
+                album=item.album,
+                artist=item.artist,
+                plays=item.plays,
+                minutes=item.minutes,
+                top_song=item.top_song,
+                top_song_id=item.top_song_id,
+            )
+            for item in recap.top_albums
+        ],
+        top_genres=[RecapGenreResponse(**genre) for genre in genres],
+        monthly_top_artists=[
+            RecapMonthlyArtistResponse(
+                month=item.month,
+                artist=item.artist,
+                plays=item.plays,
+            )
+            for item in recap.monthly_top_artists
+        ],
+        top_obsession=(
+            _episode_response(recap.top_obsession) if recap.top_obsession else None
+        ),
+        profile=RecapProfileResponse(
+            key=recap.profile.key,
+            label=recap.profile.label,
+            description=recap.profile.description,
+        ),
+    )
+
+
+@router.get("/artwork", response_model=ArtworkResponse)
+def get_artwork(
+    artist: str = Query(..., min_length=1),
+    title: str = Query(""),
+):
+    """Carátula de una canción, resuelta en el servidor y cacheada."""
+    return ArtworkResponse(url=find_cover(artist, title))
+
+
+@router.get("/recap", response_model=RecapResponse)
+def get_recap(
+    since: datetime | None = None,
+    until: datetime | None = None,
+    repo: CancionesRepository = Depends(get_repository),
+):
+    records = repo.get_play_history(since=since, until=until)
+    if not records:
+        raise HTTPException(404, "No hay scrobbles en este periodo")
+
+    recap = build_recap(
+        records,
+        settings.timezone,
+        period_start=since.date() if since else None,
+        period_end=until.date() if until else None,
+    )
+    genres = build_genres(
+        [(artist.artist, artist.plays) for artist in recap.top_artists]
+    )
+    return _recap_response(recap, genres)
 
 
 @router.get("/obsessions", response_model=list[ObsessionResponse])
