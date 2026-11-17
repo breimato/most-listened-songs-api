@@ -2,6 +2,8 @@
 
 Track your most played songs via Last.fm scrobbles. Uses [Pano Scrobbler](https://github.com/kawaiiDango/pano-scrobbler) on Android to capture plays from Spotify, YouTube, and YouTube Music — including loops.
 
+> Solo se usan **Pano Scrobbler** y **Last.fm**. La app no llama a la API de YouTube ni necesita credenciales de Google (`YOUTUBE_API_KEY`, `GOOGLE_CLIENT_ID`… ya no se usan).
+
 ---
 
 ## Setup
@@ -41,6 +43,8 @@ Sin Docker, el proyecto sigue funcionando con SQLite (`DATABASE_URL=sqlite:///ca
 LASTFM_API_KEY=your_api_key_here
 LASTFM_USERNAME=your_lastfm_username
 ```
+
+No hace falta configurar nada de YouTube ni de Google: Pano Scrobbler ya envía las reproducciones a Last.fm y la app solo lee de ahí.
 
 ### 3. Sync and start
 

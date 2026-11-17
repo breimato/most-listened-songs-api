@@ -43,7 +43,7 @@ export default function App() {
 
       <header className="header">
         <div>
-          <p className="header__eyebrow">Last.fm · Spotify · YouTube</p>
+          <p className="header__eyebrow">Pano Scrobbler · Last.fm</p>
           <h1>Canciones más escuchadas</h1>
           <p className="header__subtitle">
             Tu historial de scrobbles, ordenado por reproducciones.
