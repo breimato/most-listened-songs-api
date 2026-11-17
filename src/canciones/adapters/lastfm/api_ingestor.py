@@ -3,6 +3,7 @@
 import calendar
 import json
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime
@@ -71,8 +72,14 @@ class LastFMAPIIngestor:
             params["from"] = str(from_ts)
 
         url = _API_BASE + "?" + urllib.parse.urlencode(params)
-        with urllib.request.urlopen(url, timeout=30) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+        for attempt in range(3):
+            try:
+                with urllib.request.urlopen(url, timeout=30) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except (urllib.error.HTTPError, urllib.error.URLError):
+                if attempt == 2:
+                    raise
+                time.sleep(1 + attempt)
 
     def _parse_tracks(self, tracks: list) -> list[tuple[Song, datetime]]:
         results = []

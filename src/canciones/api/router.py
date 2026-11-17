@@ -1,4 +1,5 @@
 from datetime import datetime
+from urllib.error import HTTPError, URLError
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -23,6 +24,8 @@ def sync(repo: CancionesRepository = Depends(get_repository)):
         pairs = ingestor.fetch_recent(from_ts=from_ts)
     except ValueError as e:
         raise HTTPException(400, str(e))
+    except (HTTPError, URLError) as e:
+        raise HTTPException(502, f"Last.fm no está disponible ahora mismo: {e}")
 
     imported = 0
     skipped = 0
