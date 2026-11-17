@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Download code
+        uses: actions/checkout@v4
+
+      - name: Python setup
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Compile and run tests
+        run: pytest -q
+
+      - name: Login GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Dockerfile
+        if: github.event_name == 'push'
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          docker build -t "$IMAGE:$GITHUB_SHA" .
+
+      - name: Publish Dockerfile
+        if: github.event_name == 'push'
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          docker push "$IMAGE:$GITHUB_SHA"
+
+      - name: Download deployment repository
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.DEPLOY_REPO_TOKEN != ''
+        uses: actions/checkout@v4
+        with:
+          repository: breimato/cluster-config
+          token: ${{ secrets.DEPLOY_REPO_TOKEN }}
+          path: deployment
+
+      - name: Update deployment image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.DEPLOY_REPO_TOKEN != ''
+        working-directory: deployment
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}:$GITHUB_SHA"
+
+          sed -i "s|^\([[:space:]]*image:\).*|\1 $IMAGE|" apps/youtube/youtube-deployment.yaml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add apps/youtube/youtube-deployment.yaml
+
+          if git diff --cached --quiet; then
+            echo "La imagen ya está actualizada"
+          else
+            git commit -m "Deploy Youtube $GITHUB_SHA"
+            git push
+          fi
+
+      - name: Deploy token missing
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.DEPLOY_REPO_TOKEN == ''
+        run: echo "::warning::DEPLOY_REPO_TOKEN no configurado; la imagen se publicó pero cluster-config no se actualizó."

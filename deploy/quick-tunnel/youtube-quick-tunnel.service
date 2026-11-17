@@ -1,0 +1,13 @@
+[Unit]
+Description=Quick Tunnel de Youtube hacia el cluster Kubernetes
+StartLimitIntervalSec=0
+
+[Service]
+ExecStart=__CLOUDFLARED__ tunnel --no-autoupdate --url http://127.0.0.1:80 --http-host-header youtube.home.arpa
+Restart=always
+RestartSec=10
+NoNewPrivileges=yes
+UMask=0077
+
+[Install]
+WantedBy=default.target

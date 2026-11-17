@@ -2,7 +2,8 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from canciones.adapters.db.repository import SQLiteRepository
+from canciones.adapters.db.repository import CancionesRepository
+from canciones.adapters.lastfm.api_ingestor import to_unix_timestamp
 from canciones.api.dependencies import get_repository
 from canciones.api.schemas import ArtistResponse, SongResponse, StatsResponse, SyncResponse
 from canciones.domain.models import Play
@@ -11,13 +12,15 @@ router = APIRouter(prefix="/api/v1")
 
 
 @router.post("/sync", response_model=SyncResponse)
-def sync(repo: SQLiteRepository = Depends(get_repository)):
+def sync(repo: CancionesRepository = Depends(get_repository)):
     """Fetch new scrobbles from Last.fm and store them."""
     from canciones.adapters.lastfm.api_ingestor import LastFMAPIIngestor
 
     ingestor = LastFMAPIIngestor()
     try:
-        pairs = ingestor.fetch_recent()
+        last_played = repo.get_last_played_at()
+        from_ts = to_unix_timestamp(last_played) + 1 if last_played else None
+        pairs = ingestor.fetch_recent(from_ts=from_ts)
     except ValueError as e:
         raise HTTPException(400, str(e))
 
@@ -55,7 +58,7 @@ def get_top_songs(
     artist: str | None = None,
     since: datetime | None = None,
     until: datetime | None = None,
-    repo: SQLiteRepository = Depends(get_repository),
+    repo: CancionesRepository = Depends(get_repository),
 ):
     effective_limit = top if top is not None else limit
     if year is not None:
@@ -74,7 +77,7 @@ def get_top_artists(
     offset: int = Query(0, ge=0),
     since: datetime | None = None,
     until: datetime | None = None,
-    repo: SQLiteRepository = Depends(get_repository),
+    repo: CancionesRepository = Depends(get_repository),
 ):
     stats = repo.get_top_artists(limit=limit, offset=offset, since=since, until=until)
     return [ArtistResponse(artist=s.artist, plays=s.play_count, songs=s.song_count) for s in stats]
@@ -84,7 +87,7 @@ def get_top_artists(
 def get_stats(
     since: datetime | None = None,
     until: datetime | None = None,
-    repo: SQLiteRepository = Depends(get_repository),
+    repo: CancionesRepository = Depends(get_repository),
 ):
     stats = repo.get_stats(since=since, until=until)
     return StatsResponse(

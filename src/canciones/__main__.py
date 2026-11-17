@@ -3,7 +3,7 @@
 import argparse
 import sys
 
-from canciones.adapters.db.repository import SQLiteRepository
+from canciones.adapters.db.repository import CancionesRepository
 from canciones.adapters.db.session import SessionLocal, create_tables
 from canciones.domain.models import Play
 
@@ -16,12 +16,14 @@ def cmd_serve(args):
 def cmd_sync(args):
     create_tables()
     session = SessionLocal()
-    repo = SQLiteRepository(session)
+    repo = CancionesRepository(session)
 
     try:
-        from canciones.adapters.lastfm.api_ingestor import LastFMAPIIngestor
+        from canciones.adapters.lastfm.api_ingestor import LastFMAPIIngestor, to_unix_timestamp
 
-        pairs = LastFMAPIIngestor().fetch_recent()
+        last_played = repo.get_last_played_at()
+        from_ts = to_unix_timestamp(last_played) + 1 if last_played else None
+        pairs = LastFMAPIIngestor().fetch_recent(from_ts=from_ts)
         imported = 0
         skipped = 0
 
@@ -52,7 +54,7 @@ def cmd_sync(args):
 def cmd_top(args):
     create_tables()
     session = SessionLocal()
-    repo = SQLiteRepository(session)
+    repo = CancionesRepository(session)
 
     try:
         songs = repo.get_top_songs(limit=args.limit)

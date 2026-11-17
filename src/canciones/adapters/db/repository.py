@@ -13,7 +13,7 @@ def _to_song(db: SongDB) -> Song:
     return Song(id=db.id, platform_id=db.platform_id, title=db.title, artist=db.artist, album=db.album)
 
 
-class SQLiteRepository:
+class CancionesRepository:
     def __init__(self, session: Session):
         self.session = session
 
@@ -27,6 +27,14 @@ class SQLiteRepository:
         self.session.flush()
         song.id = db.id
         return song
+
+    def get_last_played_at(self) -> datetime | None:
+        """Newest stored play, used as the Last.fm sync cursor.
+
+        Keeping the cursor in the database (instead of a local file) makes
+        incremental syncs work across containers and replicas.
+        """
+        return self.session.query(func.max(PlayDB.played_at)).scalar()
 
     def play_exists(self, song_id: int, played_at: datetime) -> bool:
         return (

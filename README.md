@@ -15,6 +15,21 @@ python -m venv .venv
 pip install -e .
 ```
 
+### 1b. Base de datos con Docker (PostgreSQL)
+
+```bash
+docker compose up -d       # PostgreSQL en localhost:5433 + API en localhost:8000
+```
+
+Para importar el histórico del antiguo `canciones.db`:
+
+```bash
+DATABASE_URL='postgresql+psycopg://canciones_user:canciones_pass@localhost:5433/canciones_db' \
+  .venv/bin/python scripts/import_sqlite.py --truncate
+```
+
+Sin Docker, el proyecto sigue funcionando con SQLite (`DATABASE_URL=sqlite:///canciones.db`).
+
 ### 2. Configure Last.fm
 
 1. Create a free account at [last.fm](https://www.last.fm)
@@ -91,7 +106,7 @@ Android (Pano Scrobbler)
   GET /api/v1/songs/top
 ```
 
-Each `sync` only fetches scrobbles newer than the last run (cursor in `data/lastfm_cursor.json`). Running sync twice in a row imports 0 duplicates.
+Each `sync` only fetches scrobbles newer than the last stored play (the cursor is `MAX(plays.played_at)` in the database, so it works across containers). Running sync twice in a row imports 0 duplicates.
 
 ---
 
@@ -111,3 +126,45 @@ npm install
 npm run dev      # desarrollo
 npm run build    # build de producción en frontend/dist
 ```
+
+---
+
+## Despliegue
+
+| Pieza | Dónde |
+|-------|-------|
+| API + PostgreSQL | Kubernetes (namespace `youtube`), imagen `ghcr.io/breimato/most-listened-songs-api` |
+| Frontend | SiteGround: https://breimato.es/youtube |
+| Acceso público a la API | Quick tunnel de Cloudflare -> Traefik -> `youtube.home.arpa` |
+
+### Kubernetes (Flux)
+
+Los manifiestos viven en `breimato/cluster-config` (`apps/youtube` y `clusters/fedora-brei/youtube.yaml`). El workflow de GitHub Actions construye la imagen, la publica en GHCR y actualiza el tag en `cluster-config` cuando existe el secret `DEPLOY_REPO_TOKEN`.
+
+Crear los Secrets una vez (requiere acceso `kubectl`):
+
+```bash
+cd cluster-config
+./apps/youtube/install-secrets.sh
+```
+
+### Frontend (FTP)
+
+```bash
+cd frontend
+npm install
+npm run deploy:ftp           # build + subida a breimato.es/public_html/youtube
+npm run upload:runtime -- https://<tunel>.trycloudflare.com
+```
+
+La URL del túnel se publica en `https://breimato.es/youtube/runtime-config.json` para no tener que reconstruir el frontend cuando cambia.
+
+### Quick tunnel
+
+`deploy/quick-tunnel/install.sh` instala dos servicios de usuario systemd:
+
+- `youtube-quick-tunnel.service`: cloudflared contra `http://127.0.0.1:80` con `Host: youtube.home.arpa`.
+- `youtube-quick-runtime.service`: espera la URL nueva, verifica `/health` + CORS desde `https://breimato.es` y sube `runtime-config.json` por FTP.
+
+La URL cambia en cada reinicio del túnel; el segundo servicio la republica automáticamente.
+

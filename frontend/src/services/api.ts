@@ -1,9 +1,12 @@
 import type { Artist, Song, Stats, SyncResult, TopSongsFilters } from '../types/api'
+import { getApiBaseUrl } from './runtimeConfig'
 
-const API_BASE = '/api/v1'
+function apiBase(): string {
+  return `${getApiBaseUrl()}/api/v1`
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, init)
+  const response = await fetch(`${apiBase()}${path}`, init)
 
   if (!response.ok) {
     const detail = await response.text()
@@ -60,6 +63,6 @@ export const api = {
   },
 
   health() {
-    return fetch('/health').then((r) => r.ok)
+    return fetch(`${getApiBaseUrl()}/health`).then((r) => r.ok)
   },
 }

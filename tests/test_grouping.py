@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from canciones.adapters.db.models import Base, PlayDB, SongDB
-from canciones.adapters.db.repository import SQLiteRepository
+from canciones.adapters.db.repository import CancionesRepository
 
 
 @pytest.fixture()
@@ -40,7 +40,7 @@ def test_versions_merge_into_one_top_entry(session):
     _add_song_with_plays(session, "joe|closer remix", "Closer (Remix)", "Joe Inoue", "Single", 5)
     _add_song_with_plays(session, "joe|closer rem", "Closer - Remastered", "Joe Inoue", "Deluxe", 3)
 
-    repo = SQLiteRepository(session)
+    repo = CancionesRepository(session)
     top = repo.get_top_songs(limit=10)
 
     assert len(top) == 1
@@ -54,7 +54,7 @@ def test_distinct_songs_stay_separate(session):
     _add_song_with_plays(session, "a|one", "Song One", "Artist", "", 4)
     _add_song_with_plays(session, "a|two", "Song Two", "Artist", "", 2)
 
-    repo = SQLiteRepository(session)
+    repo = CancionesRepository(session)
     top = repo.get_top_songs(limit=10)
 
     assert len(top) == 2
@@ -66,7 +66,7 @@ def test_stats_count_normalized_songs(session):
     _add_song_with_plays(session, "joe|closer", "Closer", "Joe Inoue", "Closer", 2)
     _add_song_with_plays(session, "joe|closer remix", "Closer (Remix)", "Joe Inoue", "Single", 1)
 
-    repo = SQLiteRepository(session)
+    repo = CancionesRepository(session)
     stats = repo.get_stats()
 
     assert stats.total_plays == 3

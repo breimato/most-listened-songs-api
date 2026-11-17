@@ -1,0 +1,16 @@
+[Unit]
+Description=Publica en SiteGround la URL del tunel de Youtube
+Wants=youtube-quick-tunnel.service
+After=youtube-quick-tunnel.service
+StartLimitIntervalSec=0
+
+[Service]
+Environment="YT_FRONTEND_DIR=__FRONTEND_DIR__"
+ExecStart=/usr/bin/python3 __SCRIPT__
+Restart=always
+RestartSec=10
+NoNewPrivileges=yes
+UMask=0077
+
+[Install]
+WantedBy=default.target
