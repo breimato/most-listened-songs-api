@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { api } from '../services/api'
+import { api, type RangeParams } from '../services/api'
 import type { TopSongsFilters } from '../types/api'
 
 export function useTopSongs(filters: TopSongsFilters) {
@@ -10,17 +10,17 @@ export function useTopSongs(filters: TopSongsFilters) {
   })
 }
 
-export function useTopArtists(limit: number, year?: number) {
+export function useTopArtists(limit: number, range: RangeParams = {}) {
   return useQuery({
-    queryKey: ['top-artists', limit, year],
-    queryFn: () => api.getTopArtists(limit, year),
+    queryKey: ['top-artists', limit, range],
+    queryFn: () => api.getTopArtists(limit, range),
   })
 }
 
-export function useStats(year?: number) {
+export function useStats(range: RangeParams = {}) {
   return useQuery({
-    queryKey: ['stats', year],
-    queryFn: () => api.getStats(year),
+    queryKey: ['stats', range],
+    queryFn: () => api.getStats(range),
   })
 }
 

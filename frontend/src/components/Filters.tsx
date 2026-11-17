@@ -1,4 +1,9 @@
+import { IconClose, IconSearch } from './Icons'
+
+type FilterVariant = 'songs' | 'artists' | 'activity'
+
 interface FiltersProps {
+  variant: FilterVariant
   limit: number
   year: string
   artist: string
@@ -10,6 +15,7 @@ interface FiltersProps {
 const LIMIT_OPTIONS = [10, 25, 50, 100]
 
 export function Filters({
+  variant,
   limit,
   year,
   artist,
@@ -22,21 +28,26 @@ export function Filters({
 
   return (
     <div className="filters">
-      <label className="filter-field">
-        <span>Top</span>
-        <select value={limit} onChange={(e) => onLimitChange(Number(e.target.value))}>
+      {variant !== 'activity' ? (
+        <div className="seg" role="group" aria-label="Cantidad">
           {LIMIT_OPTIONS.map((value) => (
-            <option key={value} value={value}>
+            <button
+              key={value}
+              type="button"
+              className={`seg__btn${limit === value ? ' is-active' : ''}`}
+              onClick={() => onLimitChange(value)}
+              aria-pressed={limit === value}
+            >
               {value}
-            </option>
+            </button>
           ))}
-        </select>
-      </label>
+        </div>
+      ) : null}
 
-      <label className="filter-field">
-        <span>Año</span>
-        <select value={year} onChange={(e) => onYearChange(e.target.value)}>
-          <option value="">Todos</option>
+      <label className="select-field">
+        <span className="visually-hidden">Año</span>
+        <select value={year} onChange={(event) => onYearChange(event.target.value)}>
+          <option value="">Todos los años</option>
           {years.map((value) => (
             <option key={value} value={value}>
               {value}
@@ -45,15 +56,28 @@ export function Filters({
         </select>
       </label>
 
-      <label className="filter-field filter-field--grow">
-        <span>Artista</span>
-        <input
-          type="search"
-          placeholder="Filtrar por artista…"
-          value={artist}
-          onChange={(e) => onArtistChange(e.target.value)}
-        />
-      </label>
+      {variant === 'songs' ? (
+        <div className="search">
+          <IconSearch size={17} className="search__icon" />
+          <input
+            type="search"
+            placeholder="Buscar artista"
+            aria-label="Filtrar por artista"
+            value={artist}
+            onChange={(event) => onArtistChange(event.target.value)}
+          />
+          {artist ? (
+            <button
+              type="button"
+              className="search__clear"
+              onClick={() => onArtistChange('')}
+              aria-label="Quitar filtro de artista"
+            >
+              <IconClose size={14} />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 }

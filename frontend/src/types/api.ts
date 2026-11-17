@@ -33,4 +33,6 @@ export interface TopSongsFilters {
   limit: number
   year?: number
   artist?: string
+  since?: string
+  until?: string
 }

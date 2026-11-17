@@ -118,9 +118,10 @@ Each `sync` only fetches scrobbles newer than the last stored play (the cursor i
 
 Interfaz web en `frontend/` (React + Vite + TypeScript):
 
-- **Top canciones** con ranking, barras de progreso y filtro por artista
-- **Top artistas** del periodo seleccionado
+- **Top canciones** con ranking, portadas reales (Deezer/iTunes) y filtro por artista
+- **Top artistas** con podio de vinilos y ranking completo
 - **Actividad** con gráficos por mes y por hora
+- **Recaps de temporada** (verano, otoño, invierno, primavera y año) con notificaciones in-app y copia del resumen
 - Botón **Sincronizar Last.fm** que llama a `POST /api/v1/sync`
 - Filtros por cantidad (top 10/25/50/100) y por año
 

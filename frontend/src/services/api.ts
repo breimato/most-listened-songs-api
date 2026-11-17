@@ -29,33 +29,46 @@ function buildQuery(params: Record<string, string | number | undefined>): string
   return query ? `?${query}` : ''
 }
 
-function yearRange(year?: number) {
-  if (!year) return {}
-  return {
-    since: `${year}-01-01T00:00:00`,
-    until: `${year}-12-31T23:59:59`,
+export interface RangeParams {
+  year?: number
+  since?: string
+  until?: string
+}
+
+function rangeQuery(range: RangeParams, extra: Record<string, string | number | undefined> = {}) {
+  if (range.since || range.until) {
+    return { ...extra, since: range.since, until: range.until }
   }
+  if (range.year) {
+    return {
+      ...extra,
+      since: `${range.year}-01-01T00:00:00`,
+      until: `${range.year}-12-31T23:59:59`,
+    }
+  }
+  return extra
 }
 
 export const api = {
   getTopSongs(filters: TopSongsFilters) {
     return request<Song[]>(
-      `/songs/top${buildQuery({
-        limit: filters.limit,
-        year: filters.year,
-        artist: filters.artist,
-      })}`,
+      `/songs/top${buildQuery(
+        rangeQuery(filters, {
+          limit: filters.limit,
+          artist: filters.artist,
+        }),
+      )}`,
     )
   },
 
-  getTopArtists(limit = 25, year?: number) {
+  getTopArtists(limit: number, range: RangeParams = {}) {
     return request<Artist[]>(
-      `/artists/top${buildQuery({ limit, ...yearRange(year) })}`,
+      `/artists/top${buildQuery(rangeQuery(range, { limit }))}`,
     )
   },
 
-  getStats(year?: number) {
-    return request<Stats>(`/stats${buildQuery(yearRange(year))}`)
+  getStats(range: RangeParams = {}) {
+    return request<Stats>(`/stats${buildQuery(rangeQuery(range))}`)
   },
 
   sync() {
