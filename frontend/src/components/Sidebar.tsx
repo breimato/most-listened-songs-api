@@ -3,9 +3,9 @@ import type { CSSProperties } from 'react'
 import type { RecapPeriod } from '../utils/recaps'
 import { recapStatusLabel } from '../utils/recaps'
 import { relativeTime } from '../utils/format'
-import { IconChart, IconMic, IconMusic, IconSparkle } from './Icons'
+import { IconChart, IconFlame, IconMic, IconMusic, IconSparkle } from './Icons'
 
-export type Tab = 'songs' | 'artists' | 'activity'
+export type Tab = 'songs' | 'artists' | 'activity' | 'obsessions'
 
 interface SidebarProps {
   tab: Tab
@@ -18,6 +18,7 @@ interface SidebarProps {
 
 const NAV = [
   { id: 'songs' as const, label: 'Canciones', icon: IconMusic },
+  { id: 'obsessions' as const, label: 'Obsesiones', icon: IconFlame },
   { id: 'artists' as const, label: 'Artistas', icon: IconMic },
   { id: 'activity' as const, label: 'Actividad', icon: IconChart },
 ]

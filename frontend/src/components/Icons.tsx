@@ -184,6 +184,14 @@ export function IconLogout({ size = 20, className }: IconProps) {
   )
 }
 
+export function IconFlame({ size = 20, className }: IconProps) {
+  return (
+    <svg {...svgProps(size, className)}>
+      <path d="M12 3c.6 3.5-2.6 4.8-2.6 7.7a2.6 2.6 0 0 0 5.2 0c0-1.1-.4-2-1-2.9 2.6 1.4 4.4 4 4.4 6.6a6 6 0 0 1-12 0C6 9.6 9.4 6.3 12 3Z" />
+    </svg>
+  )
+}
+
 export function Equalizer({ className }: { className?: string }) {
   return (
     <span className={`eq ${className ?? ''}`} aria-hidden="true">

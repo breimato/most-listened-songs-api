@@ -36,3 +36,35 @@ export interface TopSongsFilters {
   since?: string
   until?: string
 }
+
+export interface ObsessionDay {
+  date: string
+  plays: number
+}
+
+export interface Obsession {
+  id: string
+  song_id: number
+  title: string
+  artist: string
+  album: string
+  start: string
+  end: string
+  span_days: number
+  strong_days: number
+  active_days: number
+  plays: number
+  peak_day: string
+  peak_plays: number
+  tier: 'obsesion' | 'racha'
+  score: number
+  days: ObsessionDay[]
+}
+
+export interface SongTimeline {
+  song: Song
+  days: ObsessionDay[]
+  episodes: Obsession[]
+  first_listen: string | null
+  last_listen: string | null
+}

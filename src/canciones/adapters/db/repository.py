@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from canciones.adapters.db.models import PlayDB, SongDB
 from canciones.domain.models import ArtistStats, GeneralStats, Play, Song, SongStats
 from canciones.domain.normalization import normalize_artist, normalized_key
+from canciones.domain.obsessions import PlayRecord
 
 
 def _to_song(db: SongDB) -> Song:
@@ -20,6 +21,39 @@ class CancionesRepository:
     def get_song_by_platform_id(self, platform_id: str) -> Song | None:
         db = self.session.query(SongDB).filter_by(platform_id=platform_id).first()
         return _to_song(db) if db else None
+
+    def get_song(self, song_id: int) -> Song | None:
+        db = self.session.get(SongDB, song_id)
+        return _to_song(db) if db else None
+
+    def get_play_history(
+        self,
+        since: datetime | None = None,
+        until: datetime | None = None,
+    ) -> list[PlayRecord]:
+        query = self.session.query(
+            SongDB.id,
+            SongDB.title,
+            SongDB.artist,
+            SongDB.album,
+            PlayDB.played_at,
+        ).join(PlayDB, PlayDB.song_id == SongDB.id)
+
+        if since is not None:
+            query = query.filter(PlayDB.played_at >= since)
+        if until is not None:
+            query = query.filter(PlayDB.played_at <= until)
+
+        return [
+            PlayRecord(
+                song_id=row.id,
+                title=row.title,
+                artist=row.artist,
+                album=row.album,
+                played_at=row.played_at,
+            )
+            for row in query.all()
+        ]
 
     def save_song(self, song: Song) -> Song:
         db = SongDB(platform_id=song.platform_id, title=song.title, artist=song.artist, album=song.album)

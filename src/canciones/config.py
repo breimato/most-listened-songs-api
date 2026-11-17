@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     # Llave compartida para proteger la API. Vacía = sin autenticación (solo local).
     access_key: str = ""
 
+    # Zona horaria para agrupar reproducciones por día (obsesiones, actividad).
+    timezone: str = "Europe/Madrid"
+
     cors_origins: str = (
         "http://127.0.0.1:5173,http://localhost:5173,"
         "https://breimato.es,https://www.breimato.es"

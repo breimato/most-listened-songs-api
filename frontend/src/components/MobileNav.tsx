@@ -1,4 +1,4 @@
-import { IconChart, IconMic, IconMusic } from './Icons'
+import { IconChart, IconFlame, IconMic, IconMusic } from './Icons'
 import type { Tab } from './Sidebar'
 
 interface MobileNavProps {
@@ -8,6 +8,7 @@ interface MobileNavProps {
 
 const ITEMS = [
   { id: 'songs' as const, label: 'Canciones', icon: IconMusic },
+  { id: 'obsessions' as const, label: 'Obsesiones', icon: IconFlame },
   { id: 'artists' as const, label: 'Artistas', icon: IconMic },
   { id: 'activity' as const, label: 'Actividad', icon: IconChart },
 ]

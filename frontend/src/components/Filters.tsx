@@ -1,6 +1,6 @@
 import { IconClose, IconSearch } from './Icons'
 
-type FilterVariant = 'songs' | 'artists' | 'activity'
+type FilterVariant = 'songs' | 'artists' | 'activity' | 'obsessions'
 
 interface FiltersProps {
   variant: FilterVariant
@@ -28,7 +28,7 @@ export function Filters({
 
   return (
     <div className="filters">
-      {variant !== 'activity' ? (
+      {variant === 'songs' || variant === 'artists' ? (
         <div className="seg" role="group" aria-label="Cantidad">
           {LIMIT_OPTIONS.map((value) => (
             <button

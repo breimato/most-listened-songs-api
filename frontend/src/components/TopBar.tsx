@@ -3,18 +3,23 @@ import { NotificationsBell } from './NotificationsBell'
 import { SyncButton } from './SyncButton'
 import { IconLogout } from './Icons'
 import type { Tab } from './Sidebar'
+import type { Obsession } from '../types/api'
 
 interface TopBarProps {
   tab: Tab
   recaps: RecapPeriod[]
   unread: number
+  obsessions: Obsession[]
+  unreadObsessions: number
   onOpenRecap: (recap: RecapPeriod) => void
+  onOpenObsession: (obsession: Obsession) => void
   onSyncMessage: (message: string, type: 'success' | 'error') => void
   onLock: () => void
 }
 
 const TAB_LABEL: Record<Tab, string> = {
   songs: 'Canciones',
+  obsessions: 'Obsesiones',
   artists: 'Artistas',
   activity: 'Actividad',
 }
@@ -23,7 +28,10 @@ export function TopBar({
   tab,
   recaps,
   unread,
+  obsessions,
+  unreadObsessions,
   onOpenRecap,
+  onOpenObsession,
   onSyncMessage,
   onLock,
 }: TopBarProps) {
@@ -48,7 +56,10 @@ export function TopBar({
         <NotificationsBell
           recaps={recaps}
           unread={unread}
+          obsessions={obsessions}
+          unreadObsessions={unreadObsessions}
           onOpenRecap={onOpenRecap}
+          onOpenObsession={onOpenObsession}
         />
         <SyncButton onMessage={onSyncMessage} />
         <button

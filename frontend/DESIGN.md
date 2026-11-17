@@ -61,6 +61,7 @@ invierno `#5b8def → #25346b`, primavera `#3ddc84 → #0f7a43`, año
 - **Notificaciones**: popover con recaps disponibles, temporadas en curso y próximo recap.
 - **Toast**: aviso de sincronización con punto de color y cierre.
 - **Puerta de acceso**: pantalla de desbloqueo con la marca, campo de llave con mostrar/ocultar, opción de recordar y estado de error.
+- **Obsesiones**: lista de episodios (obsesión/racha) con portada, periodo, días fuertes, plays, pico y mini-heatmap; timeline modal con calendario de calor diario y episodios.
 
 ## Movimiento
 

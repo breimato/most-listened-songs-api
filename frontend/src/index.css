@@ -599,6 +599,8 @@ a {
   top: calc(100% + 10px);
   right: 0;
   width: 360px;
+  max-height: min(80vh, 620px);
+  overflow: auto;
   padding: 14px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
@@ -645,6 +647,27 @@ a {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.notif__section + .notif__section {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.notif__section-label {
+  display: block;
+  padding: 2px 6px 6px;
+  color: var(--text-faint);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.notif-item .notif-item__icon--obsession {
+  background: linear-gradient(135deg, var(--green), var(--green-deep));
+  color: var(--green-ink);
 }
 
 .notif-item {
@@ -1349,7 +1372,7 @@ a {
 .song-list__head,
 .song-row {
   display: grid;
-  grid-template-columns: 40px minmax(0, 2.2fr) minmax(0, 1.2fr) 160px;
+  grid-template-columns: 40px minmax(0, 2.2fr) minmax(0, 1.2fr) 160px 32px;
   align-items: center;
   gap: 16px;
 }
@@ -1470,6 +1493,28 @@ a {
 
 .song-row:hover .song-row__bar span {
   opacity: 1;
+}
+
+.song-row__timeline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-faint);
+  opacity: 0.55;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.song-row:hover .song-row__timeline,
+.song-row__timeline:focus-visible {
+  opacity: 1;
+  color: var(--green);
+  background: rgba(30, 215, 96, 0.1);
 }
 
 /* ── Artists ─────────────────────────────────────────────────── */
@@ -1792,6 +1837,487 @@ a {
   font-size: 14.5px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Obsessions ──────────────────────────────────────────────── */
+
+.obsessions {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.obsessions__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.obsessions__hint {
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+.obsession-group__head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.obsession-group__head h3 {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.obsession-group__head > span {
+  color: var(--text-faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.obsession-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.obsession-row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1.4fr) 240px 140px 16px;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.obsession-row:hover {
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.obsession-row:focus-visible {
+  outline-offset: -2px;
+}
+
+.obsession-row--skeleton {
+  pointer-events: none;
+}
+
+.obsession-row__main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.obsession-row__title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.obsession-row__title {
+  min-width: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.obsession-row__artist {
+  margin-top: 1px;
+  color: var(--text-dim);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.obsession-row__period {
+  margin-top: 4px;
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+.obsession-row__heat {
+  display: block;
+  width: 100%;
+}
+
+.obsession-row__stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  color: var(--text-dim);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.obsession-row__stats strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.obsession-row__peak {
+  color: var(--text-faint);
+  font-size: 10.5px;
+}
+
+.obsession-row__chevron {
+  color: var(--text-faint);
+}
+
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tier-badge--obsesion {
+  border: 1px solid rgba(30, 215, 96, 0.3);
+  background: rgba(30, 215, 96, 0.12);
+  color: var(--green);
+}
+
+.tier-badge--racha {
+  border: 1px solid rgba(240, 163, 94, 0.28);
+  background: rgba(240, 163, 94, 0.1);
+  color: #f0a35e;
+}
+
+.mini-heat {
+  display: grid;
+  grid-template-columns: repeat(var(--heat-days), minmax(2px, 1fr));
+  gap: 2px;
+  width: 100%;
+  max-width: 240px;
+  height: 26px;
+}
+
+.mini-heat__cell {
+  display: block;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.mini-heat__cell--1 {
+  background: #0c3d1d;
+}
+
+.mini-heat__cell--2 {
+  background: #126b31;
+}
+
+.mini-heat__cell--3 {
+  background: #1a9e4a;
+}
+
+.mini-heat__cell--4 {
+  background: var(--green);
+}
+
+.skeleton--heat {
+  width: 100%;
+  height: 26px;
+}
+
+/* ── Song timeline modal ─────────────────────────────────────── */
+
+.timeline-sheet {
+  display: flex;
+  flex-direction: column;
+  width: min(800px, 100%);
+  max-height: min(92vh, 900px);
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-xl);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-panel);
+  animation: sheetIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.timeline-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--line);
+  background:
+    radial-gradient(120% 160% at 0% 0%, rgba(30, 215, 96, 0.06), transparent 55%),
+    var(--bg);
+}
+
+.timeline-head .cover--lg {
+  width: 88px;
+  height: 88px;
+}
+
+.timeline-head__text {
+  min-width: 0;
+  padding-right: 44px;
+}
+
+.timeline-head__text h2 {
+  font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.timeline-head__text p {
+  margin-top: 4px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.timeline-head__text span {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-faint);
+  font-size: 11.5px;
+}
+
+.timeline-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.timeline-body {
+  flex: 1;
+  overflow: auto;
+  padding: 18px 28px 26px;
+}
+
+.timeline-loading {
+  padding: 8px 0;
+}
+
+.timeline-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.timeline-stats > div {
+  padding: 0 16px;
+  border-left: 1px solid var(--line);
+}
+
+.timeline-stats > div:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.timeline-stats dt {
+  color: var(--text-faint);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.timeline-stats dd {
+  margin-top: 3px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-section {
+  margin-top: 22px;
+}
+
+.timeline-section h3 {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.timeline-episodes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.timeline-episode {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 12px;
+}
+
+.timeline-episode.is-highlighted {
+  border-color: rgba(30, 215, 96, 0.35);
+  background: rgba(30, 215, 96, 0.06);
+}
+
+.timeline-episode__period {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.timeline-episode__meta {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Calendar heatmap ────────────────────────────────────────── */
+
+.heatmap {
+  margin: 0;
+}
+
+.heatmap__scroll {
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+}
+
+.heatmap__inner {
+  --heat-cell: 12px;
+  min-width: max-content;
+}
+
+.heatmap__months {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: var(--heat-cell);
+  margin-left: 20px;
+  margin-bottom: 6px;
+  color: var(--text-faint);
+  font-size: 9px;
+}
+
+.heatmap__months span {
+  display: block;
+  white-space: nowrap;
+}
+
+.heatmap__body {
+  display: flex;
+  gap: 7px;
+}
+
+.heatmap__weekdays {
+  display: grid;
+  grid-template-rows: repeat(7, var(--heat-cell));
+  gap: 3px;
+  width: 13px;
+  color: var(--text-faint);
+  font-size: 8px;
+  line-height: var(--heat-cell);
+  text-align: right;
+}
+
+.heatmap__grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, var(--heat-cell));
+  gap: 3px;
+}
+
+.heatmap__cell {
+  display: block;
+  width: var(--heat-cell);
+  height: var(--heat-cell);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.heatmap__cell[data-level="1"] {
+  background: #0c3d1d;
+}
+
+.heatmap__cell[data-level="2"] {
+  background: #126b31;
+}
+
+.heatmap__cell[data-level="3"] {
+  background: #1a9e4a;
+}
+
+.heatmap__cell[data-level="4"] {
+  background: var(--green);
+}
+
+.heatmap__cell.is-highlighted {
+  outline: 1px solid rgba(30, 215, 96, 0.65);
+  outline-offset: 1px;
+}
+
+.heatmap__legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 10px;
+  color: var(--text-faint);
+  font-size: 10px;
+}
+
+.heatmap__legend-cells {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.heatmap__legend-cells i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.heatmap__legend-cells i[data-level="1"] {
+  background: #0c3d1d;
+}
+
+.heatmap__legend-cells i[data-level="2"] {
+  background: #126b31;
+}
+
+.heatmap__legend-cells i[data-level="3"] {
+  background: #1a9e4a;
+}
+
+.heatmap__legend-cells i[data-level="4"] {
+  background: var(--green);
 }
 
 /* ── Recap strip (mobile) ────────────────────────────────────── */
@@ -2472,7 +2998,7 @@ a {
     left: 0;
     z-index: 40;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     padding-bottom: env(safe-area-inset-bottom);
     background: rgba(10, 10, 11, 0.97);
     border-top: 1px solid var(--line);
@@ -2588,7 +3114,7 @@ a {
   }
 
   .song-row {
-    grid-template-columns: 28px minmax(0, 1fr) 74px;
+    grid-template-columns: 28px minmax(0, 1fr) 74px 30px;
     gap: 10px;
     padding: 7px 6px;
   }
@@ -2669,6 +3195,76 @@ a {
   .recap-hero__stats {
     flex-direction: column;
     gap: 4px;
+  }
+
+  .obsession-row {
+    grid-template-columns: 48px minmax(0, 1fr) 16px;
+    grid-template-areas:
+      'cover main chevron'
+      'heat heat heat'
+      'stats stats stats';
+    row-gap: 8px;
+  }
+
+  .obsession-row > .cover {
+    grid-area: cover;
+  }
+
+  .obsession-row__main {
+    grid-area: main;
+  }
+
+  .obsession-row__heat {
+    grid-area: heat;
+  }
+
+  .obsession-row__stats {
+    grid-area: stats;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .obsession-row__chevron {
+    grid-area: chevron;
+  }
+
+  .obsession-row__peak {
+    margin-left: auto;
+  }
+
+  .timeline-head {
+    padding: 18px 20px;
+    gap: 14px;
+  }
+
+  .timeline-head .cover--lg {
+    width: 64px;
+    height: 64px;
+  }
+
+  .timeline-body {
+    padding: 16px 20px 22px;
+  }
+
+  .timeline-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 0;
+  }
+
+  .timeline-stats > div:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .timeline-episode__meta {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+
+  .heatmap__inner {
+    --heat-cell: 10px;
   }
 
   .notif__panel {

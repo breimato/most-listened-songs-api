@@ -175,3 +175,36 @@ def test_access_key_protects_api(client, monkeypatch):
     )
     assert preflight.status_code == 200
     assert preflight.headers["access-control-allow-origin"] == "https://breimato.es"
+
+
+def test_obsessions_and_song_timeline(client, db_session):
+    song = _add_song(db_session, "joe|closer", "Closer", "Joe Inoue", "Closer")
+    for day in range(1, 8):
+        for hour in range(3):
+            _add_play(db_session, song, datetime(2026, 6, day, 10 + hour))
+    db_session.commit()
+
+    response = client.get("/api/v1/obsessions")
+    assert response.status_code == 200
+    episodes = response.json()
+    assert len(episodes) == 1
+    episode = episodes[0]
+    assert episode["title"] == "Closer"
+    assert episode["tier"] == "obsesion"
+    assert episode["strong_days"] == 7
+    assert episode["plays"] == 21
+    assert episode["start"] == "2026-06-01"
+    assert episode["end"] == "2026-06-07"
+    assert len(episode["days"]) == 7
+
+    timeline = client.get(f"/api/v1/songs/{song.id}/timeline")
+    assert timeline.status_code == 200
+    data = timeline.json()
+    assert data["song"]["title"] == "Closer"
+    assert data["song"]["plays"] == 21
+    assert len(data["days"]) == 7
+    assert len(data["episodes"]) == 1
+    assert data["first_listen"].startswith("2026-06-01")
+
+    missing = client.get("/api/v1/songs/999999/timeline")
+    assert missing.status_code == 404

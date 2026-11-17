@@ -46,6 +46,25 @@ export function formatRange(since: string, until: string): string {
   return `${fmt.format(a)} – ${fmt.format(b)} ${yearFmt.format(b)}`
 }
 
+export function formatDayRange(start: string, end: string): string {
+  const a = new Date(`${start}T12:00:00`)
+  const b = new Date(`${end}T12:00:00`)
+  const fmt = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' })
+  const yearFmt = new Intl.DateTimeFormat('es-ES', { year: 'numeric' })
+  if (a.getFullYear() === b.getFullYear()) {
+    return `${fmt.format(a)} – ${fmt.format(b)} ${yearFmt.format(b)}`
+  }
+  return `${fmt.format(a)} ${yearFmt.format(a)} – ${fmt.format(b)} ${yearFmt.format(b)}`
+}
+
+export function formatDayLong(value: string): string {
+  return new Intl.DateTimeFormat('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+  }).format(new Date(`${value}T12:00:00`))
+}
+
 export function relativeTime(iso: string | null): string {
   if (!iso) return 'Sin datos'
   const then = new Date(iso).getTime()

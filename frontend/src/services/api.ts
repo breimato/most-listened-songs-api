@@ -1,4 +1,12 @@
-import type { Artist, Song, Stats, SyncResult, TopSongsFilters } from '../types/api'
+import type {
+  Artist,
+  Obsession,
+  Song,
+  SongTimeline,
+  Stats,
+  SyncResult,
+  TopSongsFilters,
+} from '../types/api'
 import {
   clearStoredAccessKey,
   getAccessKey,
@@ -93,6 +101,16 @@ export const api = {
 
   getStats(range: RangeParams = {}) {
     return request<Stats>(`/stats${buildQuery(rangeQuery(range))}`)
+  },
+
+  getObsessions(range: RangeParams = {}) {
+    return request<Obsession[]>(`/obsessions${buildQuery(rangeQuery(range))}`)
+  },
+
+  getSongTimeline(songId: number, range: RangeParams = {}) {
+    return request<SongTimeline>(
+      `/songs/${songId}/timeline${buildQuery(rangeQuery(range))}`,
+    )
   },
 
   sync() {

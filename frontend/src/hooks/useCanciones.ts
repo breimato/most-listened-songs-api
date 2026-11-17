@@ -24,6 +24,21 @@ export function useStats(range: RangeParams = {}) {
   })
 }
 
+export function useObsessions(range: RangeParams = {}) {
+  return useQuery({
+    queryKey: ['obsessions', range],
+    queryFn: () => api.getObsessions(range),
+  })
+}
+
+export function useSongTimeline(songId: number | null) {
+  return useQuery({
+    queryKey: ['song-timeline', songId],
+    queryFn: () => api.getSongTimeline(songId as number),
+    enabled: songId !== null,
+  })
+}
+
 export function useSync() {
   const queryClient = useQueryClient()
 

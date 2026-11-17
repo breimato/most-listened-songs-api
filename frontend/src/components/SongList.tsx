@@ -3,16 +3,23 @@ import type { CSSProperties } from 'react'
 import type { Song } from '../types/api'
 import { formatNumber } from '../utils/format'
 import { CoverArt } from './CoverArt'
-import { Equalizer } from './Icons'
+import { Equalizer, IconChart } from './Icons'
 
 interface SongListProps {
   songs: Song[] | undefined
   isLoading: boolean
   isError: boolean
   emptyHint?: string
+  onOpenTimeline?: (song: Song) => void
 }
 
-export function SongList({ songs, isLoading, isError, emptyHint }: SongListProps) {
+export function SongList({
+  songs,
+  isLoading,
+  isError,
+  emptyHint,
+  onOpenTimeline,
+}: SongListProps) {
   if (isLoading) {
     return (
       <ol className="song-list" aria-busy="true">
@@ -58,6 +65,7 @@ export function SongList({ songs, isLoading, isError, emptyHint }: SongListProps
         <span>Título</span>
         <span>Álbum</span>
         <span className="song-list__head-right">Reproducciones</span>
+        <span />
       </li>
       {songs.map((song, index) => (
         <li key={`${song.id}-${index}`} className="song-row" style={{ '--row': index } as CSSProperties}>
@@ -78,6 +86,19 @@ export function SongList({ songs, isLoading, isError, emptyHint }: SongListProps
               <span style={{ width: `${Math.max(4, (song.plays / maxPlays) * 100)}%` }} />
             </span>
           </div>
+          {onOpenTimeline ? (
+            <button
+              type="button"
+              className="song-row__timeline"
+              onClick={() => onOpenTimeline(song)}
+              aria-label={`Ver historial de ${song.title}`}
+              title="Ver historial"
+            >
+              <IconChart size={15} />
+            </button>
+          ) : (
+            <span />
+          )}
         </li>
       ))}
     </ol>

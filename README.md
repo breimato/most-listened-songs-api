@@ -87,10 +87,23 @@ Swagger UI at `http://127.0.0.1:8000/docs`
 | `GET` | `/api/v1/songs/top` | Top songs by play count |
 | `GET` | `/api/v1/artists/top` | Top artists by play count |
 | `GET` | `/api/v1/stats` | General stats (plays by month, hour, etc.) |
+| `GET` | `/api/v1/obsessions` | Épocas de obsesión y rachas detectadas |
+| `GET` | `/api/v1/songs/{id}/timeline` | Historial diario de una canción y sus episodios |
 | `GET` | `/health` | Health check |
 
 All query endpoints accept optional `since`, `until` (ISO datetime), and `limit`/`offset` parameters.
 `/songs/top` also accepts `artist` for filtering.
+
+### Obsesiones
+
+Una **obsesión** es una ventana de 7 días con al menos 5 días de 2+ reproducciones
+(y 14 plays), o de 14 días con al menos 10 días fuertes (y 28 plays). Las
+**rachas** son la versión corta: 4 días fuertes en 7 o 7 en 14. Los picos de un
+solo día (loops) no cuentan por sí solos. Todo se agrupa por día en
+`Europe/Madrid` y las versiones de una misma canción se suman.
+
+- `GET /api/v1/obsessions?since=&until=&tier=all|obsesion|racha`
+- `GET /api/v1/songs/{id}/timeline?since=&until`
 
 ### Acceso
 
@@ -135,6 +148,7 @@ Interfaz web en `frontend/` (React + Vite + TypeScript):
 - **Top artistas** con podio de vinilos y ranking completo
 - **Actividad** con gráficos por mes y por hora
 - **Recaps de temporada** (verano, otoño, invierno, primavera y año) con notificaciones in-app y copia del resumen
+- **Obsesiones y rachas** con timeline diario y calendario de calor por canción
 - Botón **Sincronizar Last.fm** que llama a `POST /api/v1/sync`
 - Filtros por cantidad (top 10/25/50/100) y por año
 

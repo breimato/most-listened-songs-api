@@ -1,13 +1,27 @@
-from datetime import datetime
+from collections import Counter
+from datetime import date, datetime
+from typing import Literal
 from urllib.error import HTTPError, URLError
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from canciones.adapters.db.repository import CancionesRepository
 from canciones.adapters.lastfm.api_ingestor import to_unix_timestamp
 from canciones.api.dependencies import get_repository, require_access_key
-from canciones.api.schemas import ArtistResponse, SongResponse, StatsResponse, SyncResponse
+from canciones.api.schemas import (
+    ArtistResponse,
+    ObsessionDayResponse,
+    ObsessionResponse,
+    SongResponse,
+    SongTimelineResponse,
+    StatsResponse,
+    SyncResponse,
+)
+from canciones.config import settings
 from canciones.domain.models import Play
+from canciones.domain.normalization import normalized_key
+from canciones.domain.obsessions import ObsessionEpisode, detect_obsessions, local_date
 
 router = APIRouter(
     prefix="/api/v1",
@@ -105,4 +119,89 @@ def get_stats(
         top_day=stats.top_day,
         first_listen=stats.first_listen,
         last_listen=stats.last_listen,
+    )
+
+
+def _episode_response(episode: ObsessionEpisode) -> ObsessionResponse:
+    return ObsessionResponse(
+        id=episode.id,
+        song_id=episode.song_id,
+        title=episode.title,
+        artist=episode.artist,
+        album=episode.album,
+        start=episode.start,
+        end=episode.end,
+        span_days=episode.span_days,
+        strong_days=episode.strong_days,
+        active_days=episode.active_days,
+        plays=episode.plays,
+        peak_day=episode.peak_day,
+        peak_plays=episode.peak_plays,
+        tier=episode.tier,
+        score=episode.score,
+        days=[
+            ObsessionDayResponse(date=day, plays=plays)
+            for day, plays in episode.days
+        ],
+    )
+
+
+@router.get("/obsessions", response_model=list[ObsessionResponse])
+def get_obsessions(
+    since: datetime | None = None,
+    until: datetime | None = None,
+    tier: Literal["all", "obsesion", "racha"] = "all",
+    limit: int = Query(50, ge=1, le=200),
+    repo: CancionesRepository = Depends(get_repository),
+):
+    records = repo.get_play_history(since=since, until=until)
+    episodes = detect_obsessions(records, settings.timezone)
+    if tier != "all":
+        episodes = [episode for episode in episodes if episode.tier == tier]
+    return [_episode_response(episode) for episode in episodes[:limit]]
+
+
+@router.get("/songs/{song_id}/timeline", response_model=SongTimelineResponse)
+def get_song_timeline(
+    song_id: int,
+    since: datetime | None = None,
+    until: datetime | None = None,
+    repo: CancionesRepository = Depends(get_repository),
+):
+    song = repo.get_song(song_id)
+    if song is None:
+        raise HTTPException(404, "Canción no encontrada")
+
+    key = normalized_key(song.artist or "", song.title or "")
+    records = [
+        record
+        for record in repo.get_play_history(since=since, until=until)
+        if normalized_key(record.artist or "", record.title or "") == key
+    ]
+
+    tz = ZoneInfo(settings.timezone)
+    daily: Counter[date] = Counter()
+    for record in records:
+        daily[local_date(record.played_at, tz)] += 1
+
+    episodes = detect_obsessions(records, settings.timezone)
+    ordered_days = sorted(daily)
+    first_listen = min((record.played_at for record in records), default=None)
+    last_listen = max((record.played_at for record in records), default=None)
+
+    return SongTimelineResponse(
+        song=SongResponse(
+            id=song.id,
+            title=song.title,
+            artist=song.artist,
+            album=song.album,
+            plays=sum(daily.values()),
+        ),
+        days=[
+            ObsessionDayResponse(date=day, plays=daily[day])
+            for day in ordered_days
+        ],
+        episodes=[_episode_response(episode) for episode in episodes],
+        first_listen=first_listen,
+        last_listen=last_listen,
     )
