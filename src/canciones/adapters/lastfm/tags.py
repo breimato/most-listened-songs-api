@@ -5,6 +5,7 @@ import time
 import urllib.parse
 import urllib.request
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 
 from canciones.config import settings
 
@@ -72,7 +73,7 @@ def artist_tags(artist: str) -> list[str]:
     }
     try:
         url = _API_BASE + "?" + urllib.parse.urlencode(params)
-        with urllib.request.urlopen(url, timeout=15) as response:
+        with urllib.request.urlopen(url, timeout=6) as response:
             data = json.loads(response.read().decode("utf-8"))
         tags = data.get("toptags", {}).get("tag", [])
         names: list[str] = []
@@ -91,9 +92,16 @@ def artist_tags(artist: str) -> list[str]:
 
 
 def build_genres(artists: list[tuple[str, int]], limit: int = 6) -> list[dict]:
+    selected = artists[:4]
+    if not selected:
+        return []
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        tag_lists = list(pool.map(lambda item: artist_tags(item[0]), selected))
+
     weights: Counter[str] = Counter()
-    for artist, plays in artists[:6]:
-        for index, tag in enumerate(artist_tags(artist)[:3]):
+    for (artist, plays), tags in zip(selected, tag_lists):
+        for index, tag in enumerate(tags[:3]):
             weights[tag] += max(1, plays) * (3 - index)
 
     total = sum(weights.values()) or 1

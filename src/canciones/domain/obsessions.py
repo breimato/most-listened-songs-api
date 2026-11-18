@@ -6,6 +6,7 @@ un bucle de 100 reproducciones en un día) no cuentan por sí solos: la clave es
 la consistencia.
 """
 
+import bisect
 from collections import Counter
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
@@ -85,13 +86,14 @@ def _group_records(records: list[PlayRecord], tz: ZoneInfo) -> list[dict]:
 def _candidates(days: list[date], plays_by_day: Counter) -> list[tuple[date, date, str]]:
     candidates: list[tuple[date, date, str]] = []
 
-    for start in days:
+    for index, start in enumerate(days):
         for window, min_strong, min_plays, tier in WINDOWS:
             end = start + timedelta(days=window - 1)
+            stop = bisect.bisect_right(days, end)
             strong = [
                 day
-                for day in days
-                if start <= day <= end and plays_by_day[day] >= STRONG_DAY_PLAYS
+                for day in days[index:stop]
+                if plays_by_day[day] >= STRONG_DAY_PLAYS
             ]
             plays = sum(plays_by_day[day] for day in strong)
             if len(strong) >= min_strong and plays >= min_plays:

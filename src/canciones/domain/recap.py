@@ -209,9 +209,13 @@ def build_recap(
             )
         )
     songs.sort(key=lambda song: (song.plays, song.minutes), reverse=True)
+    song_by_key = {
+        normalized_key(song.artist, song.title): song for song in songs
+    }
 
     # Artistas.
     artist_groups: dict[str, dict] = {}
+    artist_names: dict[str, Counter] = defaultdict(Counter)
     for record in records:
         key = normalize_artist(record.artist or "")
         group = artist_groups.setdefault(
@@ -227,14 +231,12 @@ def build_recap(
         group["seconds"] += record.duration_seconds or 0
         group["songs"][normalized_key(record.artist or "", record.title or "")] += 1
         group["names"][record.artist] += 1
+        artist_names[key][record.artist] += 1
 
     artists: list[RecapArtist] = []
     for group in artist_groups.values():
         top_key = group["songs"].most_common(1)[0][0]
-        top_song = next(
-            (song for song in songs if normalized_key(song.artist, song.title) == top_key),
-            None,
-        )
+        top_song = song_by_key.get(top_key)
         artists.append(
             RecapArtist(
                 artist=group["names"].most_common(1)[0][0],
@@ -271,10 +273,7 @@ def build_recap(
     albums: list[RecapAlbum] = []
     for group in album_groups.values():
         top_key = group["songs"].most_common(1)[0][0]
-        top_song = next(
-            (song for song in songs if normalized_key(song.artist, song.title) == top_key),
-            None,
-        )
+        top_song = song_by_key.get(top_key)
         if top_song is None:
             continue
         albums.append(
@@ -291,26 +290,15 @@ def build_recap(
 
     # Artista nº1 de cada mes.
     monthly: dict[str, Counter] = defaultdict(Counter)
-    month_names: dict[str, Counter] = defaultdict(Counter)
     for record in records:
         month = _local_date(record.played_at, tz).strftime("%Y-%m")
         key = normalize_artist(record.artist or "")
         monthly[month][key] += 1
-        month_names[month][record.artist] += 1
 
     monthly_top: list[RecapMonthlyArtist] = []
     for month in sorted(monthly):
         key = monthly[month].most_common(1)[0][0]
-        artist_name = month_names[month].most_common(1)[0][0]
-        # Si hay empate, el nombre mostrado debe corresponder al artista ganador.
-        artist_name = next(
-            (
-                record.artist
-                for record in records
-                if normalize_artist(record.artist or "") == key
-            ),
-            artist_name,
-        )
+        artist_name = artist_names[key].most_common(1)[0][0]
         monthly_top.append(
             RecapMonthlyArtist(
                 month=month,
