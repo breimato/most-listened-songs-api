@@ -120,6 +120,21 @@ def test_songs_match_allows_feature_vs_solo():
     )
 
 
+def test_songs_match_ignores_romanization_spacing():
+    assert songs_match(
+        "NICO Touches the Walls",
+        "Niwakaamenimomakezu (Album Mix)",
+        "NICO Touches the Walls",
+        "Niwaka Ame Nimo Makezu",
+    )
+    assert not songs_match(
+        "One Piece",
+        "Ending 2 (Castellano) 4K",
+        "One Piece",
+        "Opening 2 (Castellano) 4K",
+    )
+
+
 def test_catalog_resolves_platform_variants():
     catalog = SongCatalog(
         [Song(id=15, platform_id="joe inoue|closer", title="Closer", artist="Joe Inoue")]

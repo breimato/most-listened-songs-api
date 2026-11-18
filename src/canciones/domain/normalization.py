@@ -390,6 +390,10 @@ def titles_similar(first: str, second: str) -> bool:
         return False
     if _numbers(first) != _numbers(second):
         return False
+    # Romanization often splits or joins words ("Niwaka Ame Nimo" vs
+    # "Niwakaamenimomakezu"); spacing alone does not make a different song.
+    if first.replace(" ", "") == second.replace(" ", ""):
+        return True
     # Opening 2 vs Ending 2 are different songs even when the rest matches.
     if first.split()[0] != second.split()[0]:
         return False
