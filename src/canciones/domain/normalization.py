@@ -153,6 +153,11 @@ _PUNCT_RE = re.compile(r"[^\w\s]")
 _LEADING_TRACK_RE = re.compile(r"^\s*\d{1,3}\s*[\.\)\-]\s+")
 _TRAILING_TRACK_RE = re.compile(r"\s+(?:no\.?|nº|#)\s*\d+\s*$", re.IGNORECASE)
 _YEAR_RE = re.compile(r"\s*[\(\[]\s*(?:19|20)\d{2}\s*[\)\]]\s*")
+_TRAILING_TV_RE = re.compile(
+    r"\s*[-–—]?\s*\b(?:tv\s*size|tv\s*ver(?:sion)?)\b\s*[-–—]?\s*$",
+    re.IGNORECASE,
+)
+_FROM_RE = re.compile(r"\bfrom\b", re.IGNORECASE)
 
 _PLATFORM_NOISE_RE = re.compile(
     r"\b(?:official|oficial|video|vídeo|videoclip|audio|visualizer|lyrics|lyric|"
@@ -219,7 +224,18 @@ def _strip_unbalanced(text: str) -> str:
 def _noise_segment(inner: str) -> bool:
     if not inner.strip():
         return True
+    if _FROM_RE.search(inner):
+        return True
     return bool(_NOISE_RE.search(inner) or _JP_NOISE_RE.search(inner))
+
+
+def _strip_trailing_tv(text: str) -> str:
+    for _ in range(2):
+        stripped = _TRAILING_TV_RE.sub("", text).strip()
+        if stripped == text or not stripped:
+            break
+        text = stripped
+    return text
 
 
 def _drop_brackets(text: str) -> str:
@@ -300,10 +316,12 @@ def canonical_title(artist: str, title: str) -> str:
     text = _LEADING_TRACK_RE.sub("", text)
     text = _TRAILING_TRACK_RE.sub("", text)
     text = _YEAR_RE.sub(" ", text)
+    text = _strip_trailing_tv(text)
     text = _drop_brackets(text)
     text = _FEAT_TAIL_RE.sub("", text)
     text = _drop_slash_noise(text)
     text = _drop_dash_noise(text)
+    text = _strip_trailing_tv(text)
     text = _drop_artist_segment(text, artist)
 
     result = _basic_key(text)
