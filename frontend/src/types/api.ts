@@ -67,6 +67,8 @@ export interface SongTimeline {
   episodes: Obsession[]
   first_listen: string | null
   last_listen: string | null
+  total_minutes: number
+  duration_coverage: number
 }
 
 export interface RecapSong {

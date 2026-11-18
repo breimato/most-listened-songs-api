@@ -1,0 +1,45 @@
+name: Frontend deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend_deploy.yaml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download code
+        uses: actions/checkout@v4
+
+      - name: Node setup
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install and build
+        working-directory: frontend
+        env:
+          VITE_BASE_PATH: /youtube/
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy to SiteGround via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.SITEGROUND_FTP_HOST }}
+          username: ${{ secrets.SITEGROUND_FTP_USERNAME }}
+          password: ${{ secrets.SITEGROUND_FTP_PASSWORD }}
+          port: ${{ secrets.SITEGROUND_FTP_PORT }}
+          protocol: ftp
+          local-dir: ./frontend/dist/
+          server-dir: breimato.es/public_html/youtube/
+          exclude: |
+            **/runtime-config.json

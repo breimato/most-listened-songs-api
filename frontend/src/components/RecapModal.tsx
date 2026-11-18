@@ -11,8 +11,17 @@ import {
   formatNumber,
   hourLabel,
 } from '../utils/format'
+import { buildComparisons, COMPARISON_SOURCES } from '../utils/comparisons'
+import { shareRecapCard } from '../utils/shareCard'
 import { CoverArt } from './CoverArt'
-import { IconCheck, IconClose, IconCopy, IconFlame, IconSparkle } from './Icons'
+import {
+  IconCheck,
+  IconClose,
+  IconCopy,
+  IconDownload,
+  IconFlame,
+  IconSparkle,
+} from './Icons'
 
 interface RecapModalProps {
   recap: RecapPeriod
@@ -54,6 +63,8 @@ function pct(value: number): string {
 export function RecapModal({ recap, onClose, onOpenObsession }: RecapModalProps) {
   const closeRef = useRef<HTMLButtonElement>(null)
   const [copied, setCopied] = useState(false)
+  const [sharing, setSharing] = useState(false)
+  const [shared, setShared] = useState('')
   const query = useRecap({ since: recap.since, until: recap.until })
   const data: Recap | undefined = query.data
 
@@ -120,6 +131,20 @@ export function RecapModal({ recap, onClose, onOpenObsession }: RecapModalProps)
 
     setCopied(true)
     window.setTimeout(() => setCopied(false), 2200)
+  }
+
+  const handleShare = async () => {
+    if (!data) return
+    setSharing(true)
+    try {
+      const result = await shareRecapCard(data, recap)
+      setShared(result === 'shared' ? 'Compartido' : 'PNG descargado')
+    } catch {
+      setShared('No se pudo generar')
+    } finally {
+      setSharing(false)
+      window.setTimeout(() => setShared(''), 2600)
+    }
   }
 
   return (
@@ -410,6 +435,38 @@ export function RecapModal({ recap, onClose, onOpenObsession }: RecapModalProps)
                 </dl>
               </section>
 
+              <section className="recap-section">
+                <h3>Lo que dan de sí</h3>
+                <ul className="recap-comparisons">
+                  {buildComparisons(Math.round(hours * 60))
+                    .slice(0, 5)
+                    .map((comparison) => (
+                      <li key={comparison.key} className="recap-comparison">
+                        <span className="recap-comparison__label">
+                          {comparison.label}
+                        </span>
+                        <strong>{comparison.value}</strong>
+                        <span className="recap-comparison__note">
+                          {comparison.note}
+                        </span>
+                      </li>
+                    ))}
+                </ul>
+                <p className="recap-note">
+                  Cálculos con{' '}
+                  {COMPARISON_SOURCES.map((source, index) => (
+                    <span key={source.label}>
+                      <a href={source.url} target="_blank" rel="noreferrer">
+                        {source.label}
+                      </a>
+                      {index < COMPARISON_SOURCES.length - 1 ? ' y ' : ''}
+                    </span>
+                  ))}
+                  . Supuestos: curso de 40 h, libro de 90.000 palabras a 250 ppm,
+                  película de 2 h, caminar 5 km/h, dormir 8 h.
+                </p>
+              </section>
+
               {data.top_obsession ? (
                 <section className="recap-section">
                   <h3>Tu obsesión del periodo</h3>
@@ -494,15 +551,26 @@ export function RecapModal({ recap, onClose, onOpenObsession }: RecapModalProps)
         </div>
 
         <footer className="recap-foot">
-          <button
-            type="button"
-            className="btn btn--ghost"
-            onClick={copySummary}
-            disabled={!data}
-          >
-            {copied ? <IconCheck size={17} /> : <IconCopy size={17} />}
-            {copied ? 'Copiado' : 'Copiar resumen'}
-          </button>
+          <div className="recap-foot__actions">
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={copySummary}
+              disabled={!data}
+            >
+              {copied ? <IconCheck size={17} /> : <IconCopy size={17} />}
+              {copied ? 'Copiado' : 'Copiar resumen'}
+            </button>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={handleShare}
+              disabled={!data || sharing}
+            >
+              <IconDownload size={17} />
+              {sharing ? 'Generando…' : shared || 'Compartir PNG'}
+            </button>
+          </div>
           <button type="button" className="btn btn--primary" onClick={onClose}>
             Cerrar
           </button>

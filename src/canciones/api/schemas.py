@@ -69,6 +69,13 @@ class SongTimelineResponse(BaseModel):
     episodes: list[ObsessionResponse]
     first_listen: datetime | None
     last_listen: datetime | None
+    total_minutes: int
+    duration_coverage: float
+
+
+class DurationBackfillResponse(BaseModel):
+    processed: int
+    updated: int
 
 
 class RecapSongResponse(BaseModel):

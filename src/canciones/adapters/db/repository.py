@@ -26,6 +26,21 @@ class CancionesRepository:
         db = self.session.get(SongDB, song_id)
         return _to_song(db) if db else None
 
+    def get_missing_durations(self, limit: int = 500) -> list[tuple[int, str, str]]:
+        rows = (
+            self.session.query(SongDB.id, SongDB.title, SongDB.artist)
+            .filter(SongDB.duration_seconds.is_(None))
+            .order_by(SongDB.id)
+            .limit(limit)
+            .all()
+        )
+        return [(row.id, row.title, row.artist) for row in rows]
+
+    def set_song_duration(self, song_id: int, seconds: int) -> None:
+        db = self.session.get(SongDB, song_id)
+        if db is not None:
+            db.duration_seconds = seconds
+
     def get_play_history(
         self,
         since: datetime | None = None,

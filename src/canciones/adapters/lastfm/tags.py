@@ -48,6 +48,42 @@ _TAG_CASE = {
     "hip-hop": "Hip-Hop",
 }
 
+_TAG_ES = {
+    "Electronic": "Electrónica",
+    "Japanese": "Japonés",
+    "Classical": "Clásica",
+    "Soundtrack": "Banda sonora",
+    "Video Game Music": "Música de videojuegos",
+    "Alternative": "Alternativo",
+    "Latin": "Latino",
+    "Reggaeton": "Reggaetón",
+    "Drum And Bass": "Drum and Bass",
+    "Film Score": "Banda sonora",
+    "Movie Soundtrack": "Banda sonora",
+    "Chillout": "Chillout",
+    "New Wave": "New Wave",
+    "Synthpop": "Synthpop",
+    "Folk": "Folk",
+    "Punk": "Punk",
+    "Metal": "Metal",
+    "Jazz": "Jazz",
+    "Soul": "Soul",
+    "Funk": "Funk",
+    "Blues": "Blues",
+    "Country": "Country",
+    "Gospel": "Gospel",
+    "Ambient": "Ambient",
+    "House": "House",
+    "Techno": "Techno",
+    "Trance": "Trance",
+    "Dubstep": "Dubstep",
+    "Anime": "Anime",
+    "Indie": "Indie",
+    "Dance": "Dance",
+    "Pop": "Pop",
+    "Rock": "Rock",
+}
+
 
 def _normalize_tag(name: str) -> str:
     return name.strip().lower()
@@ -82,6 +118,7 @@ def artist_tags(artist: str) -> list[str]:
             if not name or _normalize_tag(name) in _GENERIC:
                 continue
             pretty = _TAG_CASE.get(name.lower(), name.title())
+            pretty = _TAG_ES.get(pretty, pretty)
             if pretty not in names:
                 names.append(pretty)
         _CACHE[key] = (time.time(), names)

@@ -179,6 +179,7 @@ def test_access_key_protects_api(client, monkeypatch):
 
 def test_obsessions_and_song_timeline(client, db_session):
     song = _add_song(db_session, "joe|closer", "Closer", "Joe Inoue", "Closer")
+    song.duration_seconds = 180
     for day in range(1, 8):
         for hour in range(3):
             _add_play(db_session, song, datetime(2026, 6, day, 10 + hour))
@@ -205,6 +206,8 @@ def test_obsessions_and_song_timeline(client, db_session):
     assert len(data["days"]) == 7
     assert len(data["episodes"]) == 1
     assert data["first_listen"].startswith("2026-06-01")
+    assert data["total_minutes"] == 63
+    assert data["duration_coverage"] == 1.0
 
     missing = client.get("/api/v1/songs/999999/timeline")
     assert missing.status_code == 404
@@ -259,3 +262,22 @@ def test_artwork_endpoint(client, monkeypatch):
     response = client.get("/api/v1/artwork", params={"artist": "Desconocido"})
     assert response.status_code == 200
     assert response.json() == {"url": None}
+
+
+def test_durations_backfill_endpoint(client, db_session, monkeypatch):
+    from canciones.api import router as router_module
+
+    song = _add_song(db_session, "x|duration", "Duration", "Artist", "Album")
+    db_session.commit()
+
+    monkeypatch.setattr(
+        router_module,
+        "find_duration",
+        lambda artist, title: 200,
+    )
+    response = client.post("/api/v1/durations/backfill")
+    assert response.status_code == 200
+    assert response.json() == {"processed": 1, "updated": 1}
+
+    db_session.expire_all()
+    assert db_session.get(SongDB, song.id).duration_seconds == 200

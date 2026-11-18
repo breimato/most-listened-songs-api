@@ -14,6 +14,7 @@ import { SongTimelineModal } from './components/SongTimelineModal'
 import { StatsStrip } from './components/StatsStrip'
 import { Toast } from './components/Toast'
 import { TopBar } from './components/TopBar'
+import { WrappedLaunch } from './components/WrappedLaunch'
 import {
   useObsessions,
   useStats,
@@ -66,6 +67,7 @@ export default function App({ onLock }: AppProps) {
   const [artist, setArtist] = useState('')
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [recapOpen, setRecapOpen] = useState<RecapPeriod | null>(null)
+  const [launchRecap, setLaunchRecap] = useState<RecapPeriod | null>(null)
   const [timeline, setTimeline] = useState<TimelineTarget | null>(null)
   const [readRecaps, setReadRecaps] = useState<string[]>(loadReadRecaps)
   const [seenObsessions, setSeenObsessions] = useState<string[] | null>(
@@ -112,6 +114,8 @@ export default function App({ onLock }: AppProps) {
   }, [seenObsessions, obsessionsQuery.data])
 
   const availableRecaps = recaps.filter((recap) => recap.status === 'available')
+  const yearRecap =
+    availableRecaps.find((recap) => recap.season === 'anio') ?? null
   const unreadRecaps = availableRecaps.filter(
     (recap) => !readRecaps.includes(recap.id),
   ).length
@@ -149,19 +153,45 @@ export default function App({ onLock }: AppProps) {
     })
   }, [])
 
-  const openRecap = useCallback((recap: RecapPeriod) => {
-    setRecapOpen(recap)
-    setReadRecaps((previous) => {
-      if (previous.includes(recap.id)) return previous
-      const next = [...previous, recap.id]
-      try {
-        localStorage.setItem(READ_KEY, JSON.stringify(next))
-      } catch {
-        // Sin persistencia: se mantiene en memoria.
-      }
-      return next
-    })
+  const markLaunchSeen = useCallback((recap: RecapPeriod) => {
+    try {
+      localStorage.setItem(`scrobbles:wrapped-launch:${recap.label}`, '1')
+    } catch {
+      // Sin persistencia: se mantiene en memoria.
+    }
   }, [])
+
+  useEffect(() => {
+    if (!yearRecap) return
+    let seen = false
+    try {
+      seen = Boolean(
+        localStorage.getItem(`scrobbles:wrapped-launch:${yearRecap.label}`),
+      )
+    } catch {
+      seen = false
+    }
+    if (!seen) setLaunchRecap(yearRecap)
+  }, [yearRecap?.id])
+
+  const openRecap = useCallback(
+    (recap: RecapPeriod) => {
+      if (recap.season === 'anio') markLaunchSeen(recap)
+      setLaunchRecap(null)
+      setRecapOpen(recap)
+      setReadRecaps((previous) => {
+        if (previous.includes(recap.id)) return previous
+        const next = [...previous, recap.id]
+        try {
+          localStorage.setItem(READ_KEY, JSON.stringify(next))
+        } catch {
+          // Sin persistencia: se mantiene en memoria.
+        }
+        return next
+      })
+    },
+    [markLaunchSeen],
+  )
 
   const openObsession = useCallback(
     (obsession: Obsession) => {
@@ -328,6 +358,22 @@ export default function App({ onLock }: AppProps) {
           songId={timeline.songId}
           highlightId={timeline.highlightId}
           onClose={closeTimeline}
+        />
+      ) : null}
+
+      {launchRecap ? (
+        <WrappedLaunch
+          recap={launchRecap}
+          onOpen={() => {
+            const target = launchRecap
+            markLaunchSeen(target)
+            setLaunchRecap(null)
+            openRecap(target)
+          }}
+          onClose={() => {
+            markLaunchSeen(launchRecap)
+            setLaunchRecap(null)
+          }}
         />
       ) : null}
 

@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from canciones.adapters.artwork import find_cover
+from canciones.adapters.artwork import find_cover, find_duration
 from canciones.adapters.db.repository import CancionesRepository
 from canciones.adapters.lastfm.api_ingestor import to_unix_timestamp
 from canciones.adapters.lastfm.tags import build_genres
@@ -14,6 +14,7 @@ from canciones.api.dependencies import get_repository, require_access_key
 from canciones.api.schemas import (
     ArtistResponse,
     ArtworkResponse,
+    DurationBackfillResponse,
     ObsessionDayResponse,
     ObsessionResponse,
     RecapAlbumResponse,
@@ -252,6 +253,24 @@ def get_artwork(
     return ArtworkResponse(url=find_cover(artist, title))
 
 
+@router.post("/durations/backfill", response_model=DurationBackfillResponse)
+def backfill_durations(
+    limit: int = Query(500, ge=1, le=2000),
+    repo: CancionesRepository = Depends(get_repository),
+):
+    """Rellena duraciones pendientes; lo llama un CronJob diario."""
+    items = repo.get_missing_durations(limit=limit)
+    updated = 0
+    for song_id, title, artist in items:
+        seconds = find_duration(artist, title)
+        if seconds and 10 <= seconds <= 6 * 3600:
+            repo.set_song_duration(song_id, seconds)
+            updated += 1
+        else:
+            repo.set_song_duration(song_id, 0)
+    return DurationBackfillResponse(processed=len(items), updated=updated)
+
+
 @router.get("/recap", response_model=RecapResponse)
 def get_recap(
     since: datetime | None = None,
@@ -313,6 +332,8 @@ def get_song_timeline(
         daily[local_date(record.played_at, tz)] += 1
 
     episodes = detect_obsessions(records, settings.timezone)
+    known = [record for record in records if (record.duration_seconds or 0) > 0]
+    known_seconds = sum(record.duration_seconds or 0 for record in known)
     ordered_days = sorted(daily)
     first_listen = min((record.played_at for record in records), default=None)
     last_listen = max((record.played_at for record in records), default=None)
@@ -332,4 +353,8 @@ def get_song_timeline(
         episodes=[_episode_response(episode) for episode in episodes],
         first_listen=first_listen,
         last_listen=last_listen,
+        total_minutes=round(known_seconds / 60),
+        duration_coverage=(
+            round(len(known) / len(records), 3) if records else 0
+        ),
     )

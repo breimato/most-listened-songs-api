@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 
 import { useSongTimeline } from '../hooks/useCanciones'
 import { formatDate, formatDayRange, formatNumber } from '../utils/format'
+import { buildComparisons } from '../utils/comparisons'
 import { CalendarHeatmap } from './CalendarHeatmap'
 import { CoverArt } from './CoverArt'
 import { IconClose, IconFlame } from './Icons'
@@ -43,6 +44,15 @@ export function SongTimelineModal({
   }, [onClose])
 
   const episodes = data?.episodes ?? []
+  const minutes = data?.total_minutes ?? 0
+  const approximate = (data?.duration_coverage ?? 0) < 0.9
+  const minutesLabel =
+    minutes >= 60
+      ? `${new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(
+          Math.round((minutes / 60) * 10) / 10,
+        )} h`
+      : `${formatNumber(minutes)} min`
+  const comparisons = buildComparisons(minutes).slice(0, 3)
 
   return (
     <div
@@ -97,16 +107,19 @@ export function SongTimelineModal({
                   <dd>{formatNumber(data?.song.plays ?? 0)}</dd>
                 </div>
                 <div>
+                  <dt>Minutos escuchados</dt>
+                  <dd>
+                    {approximate && minutes ? '≈ ' : ''}
+                    {minutes ? minutesLabel : '—'}
+                  </dd>
+                </div>
+                <div>
                   <dt>Primera escucha</dt>
                   <dd>{formatDate(data?.first_listen ?? null)}</dd>
                 </div>
                 <div>
                   <dt>Última escucha</dt>
                   <dd>{formatDate(data?.last_listen ?? null)}</dd>
-                </div>
-                <div>
-                  <dt>Episodios</dt>
-                  <dd>{episodes.length}</dd>
                 </div>
               </dl>
 
@@ -119,8 +132,31 @@ export function SongTimelineModal({
                 />
               </section>
 
+              {comparisons.length ? (
+                <section className="timeline-section">
+                  <h3>En ese tiempo…</h3>
+                  <ul className="recap-comparisons recap-comparisons--compact">
+                    {comparisons.map((comparison) => (
+                      <li key={comparison.key} className="recap-comparison">
+                        <span className="recap-comparison__label">
+                          {comparison.label}
+                        </span>
+                        <strong>{comparison.value}</strong>
+                        <span className="recap-comparison__note">
+                          {comparison.note}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="recap-note">
+                    Calculado con las duraciones conocidas de esta canción
+                    {approximate ? ' (aproximado)' : ''}.
+                  </p>
+                </section>
+              ) : null}
+
               <section className="timeline-section">
-                <h3>Episodios</h3>
+                <h3>Episodios ({episodes.length})</h3>
                 {episodes.length ? (
                   <ol className="timeline-episodes">
                     {episodes.map((episode) => (
