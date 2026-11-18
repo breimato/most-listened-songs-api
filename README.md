@@ -91,6 +91,8 @@ Swagger UI at `http://127.0.0.1:8000/docs`
 | `GET` | `/api/v1/songs/{id}/timeline` | Historial diario de una canción y sus episodios |
 | `GET` | `/api/v1/recap?since=&until=` | Recap tipo Wrapped del periodo |
 | `GET` | `/api/v1/artwork?artist=&title=` | Carátula resuelta en el servidor (Deezer) |
+| `POST` | `/api/v1/durations/backfill` | Rellena duraciones pendientes (CronJob diario) |
+| `POST` | `/api/v1/maintenance/dedupe` | Fusiona variantes de la misma canción (CronJob diario) |
 | `GET` | `/health` | Health check |
 
 All query endpoints accept optional `since`, `until` (ISO datetime), and `limit`/`offset` parameters.
@@ -120,15 +122,45 @@ solo día (loops) no cuentan por sí solos. Todo se agrupa por día en
 - **Perfil de escucha** (Nocturno, Loopero, Explorador, Constante…).
 - **Primera y última canción**, **obsesión del periodo** y **artista nº1 de cada mes**.
 
-Las duraciones se enriquecen una vez con:
-
-```bash
-DATABASE_URL='postgresql+psycopg://...' python scripts/backfill_durations.py
-```
+Las duraciones se enriquecen automáticamente con el CronJob diario
+`youtube-durations` (`POST /api/v1/durations/backfill`). También se puede lanzar
+a mano con `python scripts/backfill_durations.py`.
 
 Las canciones sin duración conocida no se inventan: el total de horas se
 extrapola con la duración media de las reproducciones conocidas y la UI lo
 marca con `≈` y el porcentaje de cobertura.
+
+### Deduplicación de canciones
+
+Last.fm/YouTube pueden guardar la misma canción como varias filas: `Closer`,
+`CLOSER -NARUTO オープニング ver.-`, `Closer (Naruto Opening Ver.)`, canales
+como `Joe Inoue Official English` o `- Topic`, créditos `feat.`/`con`, vídeos
+oficiales, TV size, remasters, etc.
+
+El sistema canoniza título y artista y, cuando hace falta, compara de forma
+conservadora:
+
+- Ignora sufijos de plataforma y versión (`Official Video`, `Lyrics`, `TV Size`,
+  `Opening`, `Remaster`, `Live`, `Acoustic`, `Sped Up`…), emojis, acentos,
+  mayúsculas, anchos completos y corchetes sin cerrar.
+- Quita canales (`Official`, `Official YouTube Channel`, `- Topic`, `VEVO`) y
+  créditos de artista (`feat.`, `ft.`, `con`, `with`).
+- Exige el mismo artista canónico. No mezcla capítulos, volúmenes ni
+  `Opening 2` con `Ending 2` (los números y la primera palabra deben coincidir).
+- Si ambas versiones acreditan artistas distintos (`Royalty (con Neoni)` y
+  `Royalty (con EKE)`) no las fusiona, aunque compartan título.
+- Al fusionar, conserva la fila más representativa y mueve todas las
+  reproducciones. Los duplicados se resuelven en el momento de importar y,
+  por si acaso, un CronJob diario (`youtube-dedupe`) vuelve a revisar la base.
+
+`POST /api/v1/maintenance/dedupe?dry_run=true` devuelve cuántos grupos y filas
+se fusionarían sin tocar nada. La fusión es idempotente: una segunda pasada
+devuelve `0`. También está disponible como comando:
+
+```bash
+python -m canciones dedupe --dry-run   # previsualizar
+python -m canciones dedupe             # fusionar
+```
 
 No se incluyen datos que la app no tiene: edad musical (años de lanzamiento),
 Sound Town, percentiles globales, podcasts/audiolibros ni clips de artistas.
