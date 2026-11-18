@@ -244,6 +244,31 @@ def test_recap_endpoint(client, db_session):
     assert data["first_play"].startswith("2026-06-01")
 
 
+def test_dedupe_endpoint_merges_variants(client, seeded, db_session):
+    response = client.post("/api/v1/maintenance/dedupe")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["groups_merged"] == 1
+    assert data["songs_removed"] == 1
+    assert data["plays_moved"] == 1
+    assert data["dry_run"] is False
+
+    songs = client.get("/api/v1/songs/top").json()
+    assert songs[0]["title"] == "Closer"
+    assert songs[0]["plays"] == 3
+
+
+def test_dedupe_dry_run_endpoint_keeps_variants(client, seeded, db_session):
+    response = client.post("/api/v1/maintenance/dedupe?dry_run=true")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["groups_merged"] == 1
+    assert data["dry_run"] is True
+
+    songs = client.get("/api/v1/songs/top").json()
+    assert len(songs) == 2
+
+
 def test_artwork_endpoint(client, monkeypatch):
     from canciones.api import router as router_module
 

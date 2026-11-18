@@ -14,6 +14,7 @@ from canciones.api.dependencies import get_repository, require_access_key
 from canciones.api.schemas import (
     ArtistResponse,
     ArtworkResponse,
+    DedupeResponse,
     DurationBackfillResponse,
     ObsessionDayResponse,
     ObsessionResponse,
@@ -30,7 +31,6 @@ from canciones.api.schemas import (
     SyncResponse,
 )
 from canciones.config import settings
-from canciones.domain.models import Play
 from canciones.domain.normalization import normalized_key
 from canciones.domain.obsessions import ObsessionEpisode, detect_obsessions, local_date
 from canciones.domain.recap import Recap, build_recap
@@ -56,23 +56,7 @@ def sync(repo: CancionesRepository = Depends(get_repository)):
     except (HTTPError, URLError) as e:
         raise HTTPException(502, f"Last.fm no está disponible ahora mismo: {e}")
 
-    imported = 0
-    skipped = 0
-
-    for song_data, played_at in pairs:
-        existing = repo.get_song_by_platform_id(song_data.platform_id)
-        if existing:
-            song_id = existing.id
-        else:
-            saved = repo.save_song(song_data)
-            song_id = saved.id
-
-        if repo.play_exists(song_id, played_at):
-            skipped += 1
-            continue
-
-        repo.save_play(Play(song_id=song_id, played_at=played_at))
-        imported += 1
+    imported, skipped = repo.import_scrobbles(pairs)
 
     return SyncResponse(
         imported=imported,
@@ -269,6 +253,24 @@ def backfill_durations(
         else:
             repo.set_song_duration(song_id, 0)
     return DurationBackfillResponse(processed=len(items), updated=updated)
+
+
+@router.post("/maintenance/dedupe", response_model=DedupeResponse)
+def dedupe_songs(
+    dry_run: bool = Query(False),
+    repo: CancionesRepository = Depends(get_repository),
+):
+    """Fusiona canciones que son la misma aunque cambie el título.
+
+    Lo llama un CronJob diario; con ``dry_run=true`` solo cuenta lo que haría.
+    """
+    result = repo.merge_duplicate_songs(dry_run=dry_run)
+    return DedupeResponse(
+        groups_merged=result.groups_merged,
+        songs_removed=result.songs_removed,
+        plays_moved=result.plays_moved,
+        dry_run=result.dry_run,
+    )
 
 
 @router.get("/recap", response_model=RecapResponse)

@@ -78,6 +78,13 @@ class DurationBackfillResponse(BaseModel):
     updated: int
 
 
+class DedupeResponse(BaseModel):
+    groups_merged: int
+    songs_removed: int
+    plays_moved: int
+    dry_run: bool
+
+
 class RecapSongResponse(BaseModel):
     song_id: int
     title: str

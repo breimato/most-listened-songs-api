@@ -5,7 +5,6 @@ import sys
 
 from canciones.adapters.db.repository import CancionesRepository
 from canciones.adapters.db.session import SessionLocal, create_tables
-from canciones.domain.models import Play
 
 
 def cmd_serve(args):
@@ -24,25 +23,32 @@ def cmd_sync(args):
         last_played = repo.get_last_played_at()
         from_ts = to_unix_timestamp(last_played) + 1 if last_played else None
         pairs = LastFMAPIIngestor().fetch_recent(from_ts=from_ts)
-        imported = 0
-        skipped = 0
-
-        for song_data, played_at in pairs:
-            existing = repo.get_song_by_platform_id(song_data.platform_id)
-            if existing:
-                song_id = existing.id
-            else:
-                song_id = repo.save_song(song_data).id
-
-            if repo.play_exists(song_id, played_at):
-                skipped += 1
-                continue
-
-            repo.save_play(Play(song_id=song_id, played_at=played_at))
-            imported += 1
+        imported, skipped = repo.import_scrobbles(pairs)
 
         session.commit()
         print(f"Imported {imported} scrobbles ({skipped} already known).")
+    except Exception as e:
+        session.rollback()
+        print(f"Error: {e}")
+        sys.exit(1)
+    finally:
+        session.close()
+
+
+def cmd_dedupe(args):
+    create_tables()
+    session = SessionLocal()
+    repo = CancionesRepository(session)
+
+    try:
+        result = repo.merge_duplicate_songs(dry_run=args.dry_run)
+        session.commit()
+        action = "Se fusionarían" if result.dry_run else "Fusionadas"
+        print(
+            f"{action} {result.groups_merged} canciones "
+            f"({result.songs_removed} filas duplicadas, "
+            f"{result.plays_moved} reproducciones movidas)."
+        )
     except Exception as e:
         session.rollback()
         print(f"Error: {e}")
@@ -83,6 +89,12 @@ def main():
     p_top = sub.add_parser("top", help="Show top songs")
     p_top.add_argument("--limit", type=int, default=25)
     p_top.set_defaults(func=cmd_top)
+
+    p_dedupe = sub.add_parser(
+        "dedupe", help="Merge scrobbles that are the same song"
+    )
+    p_dedupe.add_argument("--dry-run", action="store_true")
+    p_dedupe.set_defaults(func=cmd_dedupe)
 
     args = parser.parse_args()
     if not args.command:

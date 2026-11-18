@@ -1,12 +1,20 @@
+import math
 from collections import Counter
 from datetime import datetime
 
-from sqlalchemy import func
+from sqlalchemy import delete, func, update
 from sqlalchemy.orm import Session
 
 from canciones.adapters.db.models import PlayDB, SongDB
+from canciones.domain.dedup import MergeResult, SongCatalog, duplicate_groups
 from canciones.domain.models import ArtistStats, GeneralStats, Play, Song, SongStats
-from canciones.domain.normalization import normalize_artist, normalized_key
+from canciones.domain.normalization import (
+    feature_credit_count,
+    feature_tokens,
+    has_platform_noise,
+    normalize_artist,
+    normalized_key,
+)
 from canciones.domain.obsessions import PlayRecord
 
 
@@ -25,6 +33,200 @@ class CancionesRepository:
     def get_song(self, song_id: int) -> Song | None:
         db = self.session.get(SongDB, song_id)
         return _to_song(db) if db else None
+
+    def get_all_songs(self) -> list[Song]:
+        dbs = self.session.query(SongDB).order_by(SongDB.id).all()
+        return [_to_song(db) for db in dbs]
+
+    def import_scrobbles(
+        self, pairs: list[tuple[Song, datetime]]
+    ) -> tuple[int, int]:
+        """Store scrobbles, attaching title/artist variants to one song row."""
+        catalog = SongCatalog(self.get_all_songs())
+        imported = 0
+        skipped = 0
+
+        for song_data, played_at in pairs:
+            existing = catalog.find(song_data)
+            if existing is not None:
+                song_id = existing.id
+            else:
+                saved = self.save_song(song_data)
+                catalog.add(saved)
+                song_id = saved.id
+
+            if self.play_exists(song_id, played_at):
+                skipped += 1
+                continue
+
+            self.save_play(Play(song_id=song_id, played_at=played_at))
+            imported += 1
+
+        return imported, skipped
+
+    def merge_duplicate_songs(self, dry_run: bool = False) -> MergeResult:
+        """Merge rows that represent the same recording.
+
+        The oldest/most representative row keeps its id and metadata, plays from
+        the other rows are moved to it, and the empty rows are deleted.
+        """
+        rows = (
+            self.session.query(SongDB, func.count(PlayDB.id).label("plays"))
+            .outerjoin(PlayDB, PlayDB.song_id == SongDB.id)
+            .group_by(SongDB.id)
+            .all()
+        )
+        songs = [_to_song(db) for db, _ in rows]
+        play_counts = {db.id: count for db, count in rows}
+        by_id = {db.id: db for db, _ in rows}
+        groups = duplicate_groups(songs)
+
+        if dry_run:
+            plays_moved = 0
+            for group in groups:
+                representative = self._pick_representative(group, by_id, play_counts)
+                plays_moved += sum(
+                    play_counts[song.id]
+                    for song in group
+                    if song.id != representative.id
+                )
+            return MergeResult(
+                groups_merged=len(groups),
+                songs_removed=sum(len(group) - 1 for group in groups),
+                plays_moved=plays_moved,
+                dry_run=True,
+            )
+
+        result = MergeResult()
+        for group in groups:
+            candidates = [by_id[song.id] for song in group]
+            representative = self._pick_representative(
+                group, by_id, play_counts
+            )
+            self._fill_missing_metadata(representative, candidates, play_counts)
+
+            representative_times = {
+                row[0]
+                for row in self.session.query(PlayDB.played_at)
+                .filter(PlayDB.song_id == representative.id)
+                .all()
+            }
+
+            for candidate in candidates:
+                if candidate.id == representative.id:
+                    continue
+
+                candidate_times = [
+                    row[0]
+                    for row in self.session.query(PlayDB.played_at)
+                    .filter(PlayDB.song_id == candidate.id)
+                    .all()
+                ]
+                conflicts = [
+                    played_at
+                    for played_at in candidate_times
+                    if played_at in representative_times
+                ]
+                if conflicts:
+                    self.session.execute(
+                        delete(PlayDB)
+                        .where(
+                            PlayDB.song_id == candidate.id,
+                            PlayDB.played_at.in_(conflicts),
+                        )
+                        .execution_options(synchronize_session=False)
+                    )
+
+                moved = self.session.execute(
+                    update(PlayDB)
+                    .where(PlayDB.song_id == candidate.id)
+                    .values(song_id=representative.id)
+                    .execution_options(synchronize_session=False)
+                ).rowcount
+                if moved is None or moved < 0:
+                    moved = len(candidate_times) - len(conflicts)
+
+                representative_times.update(
+                    played_at
+                    for played_at in candidate_times
+                    if played_at not in conflicts
+                )
+                self.session.execute(
+                    delete(SongDB)
+                    .where(SongDB.id == candidate.id)
+                    .execution_options(synchronize_session=False)
+                )
+
+                result.plays_moved += moved
+                result.songs_removed += 1
+
+            result.groups_merged += 1
+
+        if result.groups_merged:
+            self.session.flush()
+            self.session.expire_all()
+        return result
+
+    @staticmethod
+    def _pick_representative(
+        group: list[Song],
+        by_id: dict[int, SongDB],
+        play_counts: dict[int, int],
+    ) -> SongDB:
+        """Choose the row that best represents the merged song.
+
+        Rows with less than 10% of the group's plays are ignored so a one-off
+        lyric video does not become the display title. If the group contains
+        feature credits, the representative must keep one: deleting every
+        credited variant would lose the feature signature and allow a future
+        conflicting recording ("Royalty (con EKE)") to be merged by mistake.
+        """
+        max_plays = max(play_counts[song.id] for song in group)
+        threshold = max(1, math.ceil(max_plays * 0.1))
+        candidates = [by_id[song.id] for song in group]
+        credited = [
+            song
+            for song in candidates
+            if feature_tokens(song.artist, song.title)
+        ]
+        if credited:
+            eligible = credited
+        else:
+            eligible = [
+                song for song in candidates if play_counts[song.id] >= threshold
+            ]
+
+        def score(song: SongDB):
+            return (
+                0 if has_platform_noise(song.title) else 1,
+                0 if feature_credit_count(song.title) > 1 else 1,
+                1 if (song.duration_seconds or 0) > 0 else 0,
+                1 if (song.album or "").strip() else 0,
+                play_counts[song.id],
+                -song.id,
+            )
+
+        return max(eligible, key=score)
+
+    @staticmethod
+    def _fill_missing_metadata(
+        representative: SongDB,
+        candidates: list[SongDB],
+        play_counts: dict[int, int],
+    ) -> None:
+        ordered = sorted(
+            candidates, key=lambda song: play_counts[song.id], reverse=True
+        )
+        if not (representative.duration_seconds or 0):
+            for candidate in ordered:
+                if (candidate.duration_seconds or 0) > 0:
+                    representative.duration_seconds = candidate.duration_seconds
+                    break
+        if not (representative.album or "").strip():
+            for candidate in ordered:
+                if (candidate.album or "").strip():
+                    representative.album = candidate.album
+                    break
 
     def get_missing_durations(self, limit: int = 500) -> list[tuple[int, str, str]]:
         rows = (
