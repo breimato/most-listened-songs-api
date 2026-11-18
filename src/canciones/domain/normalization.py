@@ -390,8 +390,16 @@ def titles_similar(first: str, second: str) -> bool:
         return False
     if _numbers(first) != _numbers(second):
         return False
-    # Romanization often splits or joins words ("Niwaka Ame Nimo" vs
-    # "Niwakaamenimomakezu"); spacing alone does not make a different song.
+    # Japanese/Korean titles often appear with the original script plus a
+    # romanization, or only the romanization. Compare the Latin skeleton.
+    first_ascii = re.sub(r"[^a-z0-9]", "", first)
+    second_ascii = re.sub(r"[^a-z0-9]", "", second)
+    if (
+        first_ascii
+        and first_ascii == second_ascii
+        and first.isascii() != second.isascii()
+    ):
+        return True
     if first.replace(" ", "") == second.replace(" ", ""):
         return True
     # Opening 2 vs Ending 2 are different songs even when the rest matches.

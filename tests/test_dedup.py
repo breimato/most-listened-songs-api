@@ -127,6 +127,18 @@ def test_songs_match_ignores_romanization_spacing():
         "NICO Touches the Walls",
         "Niwaka Ame Nimo Makezu",
     )
+    assert songs_match(
+        "NICO Touches the Walls",
+        "ニワカ雨ニモ負ケズ - Niwaka Ame Nimo Makezu",
+        "NICO Touches the Walls",
+        "Niwakaamenimomakezu (Album Mix)",
+    )
+    assert not songs_match(
+        "Ado",
+        "新時代 (ウタ from ONE PIECE FILM RED)",
+        "Ado",
+        "私は最強 (ウタ from ONE PIECE FILM RED)",
+    )
     assert not songs_match(
         "One Piece",
         "Ending 2 (Castellano) 4K",
