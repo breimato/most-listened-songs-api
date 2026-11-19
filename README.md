@@ -90,6 +90,7 @@ Swagger UI at `http://127.0.0.1:8000/docs`
 | `GET` | `/api/v1/obsessions` | Épocas de obsesión y rachas detectadas |
 | `GET` | `/api/v1/songs/{id}/timeline` | Historial diario de una canción y sus episodios |
 | `GET` | `/api/v1/recap?since=&until=` | Recap tipo Wrapped del periodo |
+| `GET` | `/api/v1/sleep?since=&until=` | Canciones que suenan entre las 00:00 y las 07:00 |
 | `GET` | `/api/v1/artwork?artist=&title=` | Carátula resuelta en el servidor (Deezer) |
 | `POST` | `/api/v1/durations/backfill` | Rellena duraciones pendientes (CronJob diario) |
 | `POST` | `/api/v1/maintenance/dedupe` | Fusiona variantes de la misma canción (CronJob diario) |
@@ -129,6 +130,23 @@ a mano con `python scripts/backfill_durations.py`.
 Las canciones sin duración conocida no se inventan: el total de horas se
 extrapola con la duración media de las reproducciones conocidas y la UI lo
 marca con `≈` y el porcentaje de cobertura.
+
+### Para dormir
+
+`GET /api/v1/sleep?since=&until=&limit=&min_night_plays=&min_night_share=`
+devuelve el ranking nocturno. La franja es **00:00–07:00** en
+`Europe/Madrid` y el orden mezcla horas nocturnas con porcentaje de noche:
+
+- Solo entran canciones con al menos **10 escuchas nocturnas** y un **40%** de
+  sus reproducciones dentro de la franja (ambos parámetros se pueden cambiar).
+- La puntuación es `minutos nocturnos × porcentaje nocturno`, así que una
+  canción popular de día no se cuela solo por volumen.
+- Las horas que dependen de duraciones desconocidas se estiman con la media y
+  se marcan con `≈`.
+
+La pestaña **Para dormir** muestra el ranking completo, las horas nocturnas,
+las noches con música, la hora más nocturna y el artista de noche. El recap
+incluye un resumen con el top 3 del periodo y un acceso al ranking completo.
 
 ### Deduplicación de canciones
 

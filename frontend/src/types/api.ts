@@ -120,6 +120,35 @@ export interface RecapProfile {
   description: string
 }
 
+export interface SleepSong {
+  song_id: number
+  title: string
+  artist: string
+  album: string
+  plays: number
+  total_plays: number
+  night_share: number
+  minutes: number
+  total_minutes: number
+  estimated: boolean
+  score: number
+}
+
+export interface SleepData {
+  window_start: number
+  window_end: number
+  total_plays: number
+  night_plays: number
+  night_share: number
+  night_minutes: number
+  duration_coverage: number
+  estimated: boolean
+  nights: number
+  top_hour: number | null
+  top_artist: string | null
+  songs: SleepSong[]
+}
+
 export interface Recap {
   since: string
   until: string
@@ -155,4 +184,5 @@ export interface Recap {
   monthly_top_artists: RecapMonthlyArtist[]
   top_obsession: Obsession | null
   profile: RecapProfile
+  sleep: SleepData
 }

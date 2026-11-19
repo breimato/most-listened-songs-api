@@ -85,6 +85,35 @@ class DedupeResponse(BaseModel):
     dry_run: bool
 
 
+class SleepSongResponse(BaseModel):
+    song_id: int
+    title: str
+    artist: str
+    album: str
+    plays: int
+    total_plays: int
+    night_share: float
+    minutes: int
+    total_minutes: int
+    estimated: bool
+    score: float
+
+
+class SleepResponse(BaseModel):
+    window_start: int
+    window_end: int
+    total_plays: int
+    night_plays: int
+    night_share: float
+    night_minutes: int
+    duration_coverage: float
+    estimated: bool
+    nights: int
+    top_hour: int | None
+    top_artist: str | None
+    songs: list[SleepSongResponse]
+
+
 class RecapSongResponse(BaseModel):
     song_id: int
     title: str
@@ -169,3 +198,4 @@ class RecapResponse(BaseModel):
     monthly_top_artists: list[RecapMonthlyArtistResponse]
     top_obsession: ObsessionResponse | None
     profile: RecapProfileResponse
+    sleep: SleepResponse

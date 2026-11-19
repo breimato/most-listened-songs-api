@@ -2,6 +2,7 @@ import type {
   Artist,
   Obsession,
   Recap,
+  SleepData,
   Song,
   SongTimeline,
   Stats,
@@ -116,6 +117,12 @@ export const api = {
 
   getRecap(range: RangeParams = {}) {
     return request<Recap>(`/recap${buildQuery(rangeQuery(range))}`)
+  },
+
+  getSleep(range: RangeParams = {}, limit = 50) {
+    return request<SleepData>(
+      `/sleep${buildQuery(rangeQuery(range, { limit }))}`,
+    )
   },
 
   sync() {

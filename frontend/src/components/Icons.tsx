@@ -200,6 +200,14 @@ export function IconDownload({ size = 18, className }: IconProps) {
   )
 }
 
+export function IconMoon({ size = 20, className }: IconProps) {
+  return (
+    <svg {...svgProps(size, className)}>
+      <path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5 8.6 8.6 0 1 0 20.5 14.6Z" />
+    </svg>
+  )
+}
+
 export function Equalizer({ className }: { className?: string }) {
   return (
     <span className={`eq ${className ?? ''}`} aria-hidden="true">

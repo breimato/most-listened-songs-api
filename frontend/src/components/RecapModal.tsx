@@ -20,6 +20,7 @@ import {
   IconCopy,
   IconDownload,
   IconFlame,
+  IconMoon,
   IconSparkle,
 } from './Icons'
 
@@ -27,6 +28,7 @@ interface RecapModalProps {
   recap: RecapPeriod
   onClose: () => void
   onOpenObsession?: (obsession: Obsession) => void
+  onOpenSleep?: () => void
 }
 
 const TIER_LABEL = {
@@ -60,7 +62,12 @@ function pct(value: number): string {
   return `${Math.round(value * 100)}%`
 }
 
-export function RecapModal({ recap, onClose, onOpenObsession }: RecapModalProps) {
+export function RecapModal({
+  recap,
+  onClose,
+  onOpenObsession,
+  onOpenSleep,
+}: RecapModalProps) {
   const closeRef = useRef<HTMLButtonElement>(null)
   const [copied, setCopied] = useState(false)
   const [sharing, setSharing] = useState(false)
@@ -114,6 +121,9 @@ export function RecapModal({ recap, onClose, onOpenObsession }: RecapModalProps)
         : '',
       data.top_genres.length
         ? `Géneros: ${data.top_genres.map((genre) => genre.name).join(', ')}`
+        : '',
+      data.sleep?.songs.length
+        ? `Para dormir: ${data.sleep.songs[0].title} — ${data.sleep.songs[0].artist} (${pct(data.sleep.songs[0].night_share)} de noche)`
         : '',
       `Perfil: ${data.profile.label}`,
     ].filter(Boolean)
@@ -434,6 +444,46 @@ export function RecapModal({ recap, onClose, onOpenObsession }: RecapModalProps)
                   </div>
                 </dl>
               </section>
+
+              {data.sleep.songs.length ? (
+                <section className="recap-section">
+                  <h3>Para dormir</h3>
+                  <div className="recap-sleep">
+                    <p className="recap-sleep__lead">
+                      <IconMoon size={16} />
+                      {pct(data.sleep.night_share)} de tus escuchas fueron entre
+                      las 00:00 y las 07:00 · {data.sleep.estimated ? '≈ ' : ''}
+                      {formatMinutes(data.sleep.night_minutes)} de música
+                      nocturna.
+                    </p>
+                    <ol className="recap-sleep__list">
+                      {data.sleep.songs.slice(0, 3).map((song, index) => (
+                        <li key={song.song_id} className="recap-sleep__item">
+                          <span className="recap-sleep__rank">
+                            {index === 0 ? <IconMoon size={13} /> : index + 1}
+                          </span>
+                          <span className="recap-sleep__title">
+                            {song.title}
+                            <small>{song.artist}</small>
+                          </span>
+                          <span className="recap-sleep__share">
+                            {pct(song.night_share)} noche
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                    {onOpenSleep ? (
+                      <button
+                        type="button"
+                        className="btn btn--ghost recap-sleep__action"
+                        onClick={onOpenSleep}
+                      >
+                        Ver ranking completo
+                      </button>
+                    ) : null}
+                  </div>
+                </section>
+              ) : null}
 
               <section className="recap-section">
                 <h3>Lo que dan de sí</h3>

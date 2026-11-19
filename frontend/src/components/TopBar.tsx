@@ -21,6 +21,7 @@ const TAB_LABEL: Record<Tab, string> = {
   songs: 'Canciones',
   obsessions: 'Obsesiones',
   artists: 'Artistas',
+  sleep: 'Para dormir',
   activity: 'Actividad',
 }
 

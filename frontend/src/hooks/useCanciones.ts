@@ -46,6 +46,13 @@ export function useRecap(range: RangeParams) {
   })
 }
 
+export function useSleep(range: RangeParams, limit: number) {
+  return useQuery({
+    queryKey: ['sleep', range, limit],
+    queryFn: () => api.getSleep(range, limit),
+  })
+}
+
 export function useSync() {
   const queryClient = useQueryClient()
 

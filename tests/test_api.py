@@ -269,6 +269,43 @@ def test_dedupe_dry_run_endpoint_keeps_variants(client, seeded, db_session):
     assert len(songs) == 2
 
 
+def test_sleep_endpoint(client, db_session):
+    night = _add_song(db_session, "x|night", "Night Song", "Artist", "")
+    for minute in range(10):
+        _add_play(
+            db_session,
+            night,
+            datetime(2026, 1, 10, 0, minute),
+        )
+    day = _add_song(db_session, "x|day", "Day Song", "Artist", "")
+    _add_play(db_session, day, datetime(2026, 1, 10, 12, 0))
+    db_session.commit()
+
+    response = client.get("/api/v1/sleep")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["window_start"] == 0
+    assert data["window_end"] == 7
+    assert data["night_plays"] == 10
+    assert data["total_plays"] == 11
+    assert data["songs"][0]["title"] == "Night Song"
+    assert data["songs"][0]["plays"] == 10
+    assert data["songs"][0]["night_share"] == 1.0
+
+
+def test_recap_includes_sleep_summary(client, seeded):
+    response = client.get(
+        "/api/v1/recap",
+        params={"since": "2024-01-01T00:00:00", "until": "2026-12-31T23:59:59"},
+    )
+    assert response.status_code == 200
+    sleep = response.json()["sleep"]
+    assert sleep["window_start"] == 0
+    assert sleep["window_end"] == 7
+    assert "night_plays" in sleep
+    assert isinstance(sleep["songs"], list)
+
+
 def test_artwork_endpoint(client, monkeypatch):
     from canciones.api import router as router_module
 

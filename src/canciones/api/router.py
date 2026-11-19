@@ -25,6 +25,7 @@ from canciones.api.schemas import (
     RecapProfileResponse,
     RecapResponse,
     RecapSongResponse,
+    SleepResponse,
     SongResponse,
     SongTimelineResponse,
     StatsResponse,
@@ -34,6 +35,12 @@ from canciones.config import settings
 from canciones.domain.normalization import normalized_key
 from canciones.domain.obsessions import ObsessionEpisode, detect_obsessions, local_date
 from canciones.domain.recap import Recap, build_recap
+from canciones.domain.sleep import (
+    DEFAULT_MIN_NIGHT_PLAYS,
+    DEFAULT_MIN_NIGHT_SHARE,
+    SleepSummary,
+    build_sleep,
+)
 
 router = APIRouter(
     prefix="/api/v1",
@@ -142,7 +149,41 @@ def _episode_response(episode: ObsessionEpisode) -> ObsessionResponse:
     )
 
 
-def _recap_response(recap: Recap, genres: list[dict]) -> RecapResponse:
+def _sleep_response(sleep: SleepSummary) -> SleepResponse:
+    return SleepResponse(
+        window_start=sleep.window_start,
+        window_end=sleep.window_end,
+        total_plays=sleep.total_plays,
+        night_plays=sleep.night_plays,
+        night_share=sleep.night_share,
+        night_minutes=sleep.night_minutes,
+        duration_coverage=sleep.duration_coverage,
+        estimated=sleep.estimated,
+        nights=sleep.nights,
+        top_hour=sleep.top_hour,
+        top_artist=sleep.top_artist,
+        songs=[
+            {
+                "song_id": song.song_id,
+                "title": song.title,
+                "artist": song.artist,
+                "album": song.album,
+                "plays": song.plays,
+                "total_plays": song.total_plays,
+                "night_share": song.night_share,
+                "minutes": song.minutes,
+                "total_minutes": song.total_minutes,
+                "estimated": song.estimated,
+                "score": song.score,
+            }
+            for song in sleep.songs
+        ],
+    )
+
+
+def _recap_response(
+    recap: Recap, genres: list[dict], sleep: SleepSummary
+) -> RecapResponse:
     def song(item) -> RecapSongResponse:
         return RecapSongResponse(
             song_id=item.song_id,
@@ -225,6 +266,7 @@ def _recap_response(recap: Recap, genres: list[dict]) -> RecapResponse:
             label=recap.profile.label,
             description=recap.profile.description,
         ),
+        sleep=_sleep_response(sleep),
     )
 
 
@@ -273,6 +315,28 @@ def dedupe_songs(
     )
 
 
+@router.get("/sleep", response_model=SleepResponse)
+def get_sleep(
+    since: datetime | None = None,
+    until: datetime | None = None,
+    limit: int = Query(50, ge=1, le=200),
+    min_night_plays: int = Query(DEFAULT_MIN_NIGHT_PLAYS, ge=1, le=500),
+    min_night_share: float = Query(DEFAULT_MIN_NIGHT_SHARE, ge=0, le=1),
+    repo: CancionesRepository = Depends(get_repository),
+):
+    """Canciones que más suenan entre las 00:00 y las 07:00."""
+    records = repo.get_play_history(since=since, until=until)
+    return _sleep_response(
+        build_sleep(
+            records,
+            settings.timezone,
+            min_night_plays=min_night_plays,
+            min_night_share=min_night_share,
+            limit=limit,
+        )
+    )
+
+
 @router.get("/recap", response_model=RecapResponse)
 def get_recap(
     since: datetime | None = None,
@@ -292,7 +356,8 @@ def get_recap(
     genres = build_genres(
         [(artist.artist, artist.plays) for artist in recap.top_artists]
     )
-    return _recap_response(recap, genres)
+    sleep = build_sleep(records, settings.timezone, limit=5)
+    return _recap_response(recap, genres, sleep)
 
 
 @router.get("/obsessions", response_model=list[ObsessionResponse])

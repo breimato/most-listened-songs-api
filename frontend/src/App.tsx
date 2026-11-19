@@ -9,6 +9,7 @@ import { ObsessionsView } from './components/ObsessionsView'
 import { RecapModal } from './components/RecapModal'
 import { RecapStrip } from './components/RecapStrip'
 import { Sidebar, type Tab } from './components/Sidebar'
+import { SleepView } from './components/SleepView'
 import { SongList } from './components/SongList'
 import { SongTimelineModal } from './components/SongTimelineModal'
 import { StatsStrip } from './components/StatsStrip'
@@ -17,6 +18,7 @@ import { TopBar } from './components/TopBar'
 import { WrappedLaunch } from './components/WrappedLaunch'
 import {
   useObsessions,
+  useSleep,
   useStats,
   useTopArtists,
   useTopSongs,
@@ -92,6 +94,7 @@ export default function App({ onLock }: AppProps) {
   const allStatsQuery = useStats({})
   const obsessionsQuery = useObsessions({})
   const pageObsessionsQuery = useObsessions({ year: yearNumber })
+  const sleepQuery = useSleep({ year: yearNumber }, limit)
 
   const recaps = useMemo(
     () =>
@@ -205,6 +208,10 @@ export default function App({ onLock }: AppProps) {
     setTimeline({ songId: song.id })
   }, [])
 
+  const openSongById = useCallback((songId: number) => {
+    setTimeline({ songId })
+  }, [])
+
   const closeTimeline = useCallback(() => setTimeline(null), [])
 
   const songs = songsQuery.data ?? []
@@ -218,7 +225,9 @@ export default function App({ onLock }: AppProps) {
         ? 'Episodios'
         : tab === 'artists'
           ? 'Top artistas'
-          : 'Reproducciones'
+          : tab === 'sleep'
+            ? 'Ranking nocturno'
+            : 'Reproducciones'
 
   const sectionCopy =
     tab === 'songs'
@@ -227,7 +236,9 @@ export default function App({ onLock }: AppProps) {
         ? `${formatNumber(pageObsessionsQuery.data?.length ?? 0)} episodios detectados`
         : tab === 'artists'
           ? `${formatNumber(artistsQuery.data?.length ?? 0)} artistas en el top`
-          : 'Agrupadas por mes y por hora'
+          : tab === 'sleep'
+            ? `${formatNumber(sleepQuery.data?.songs.length ?? 0)} canciones con escuchas entre las 00:00 y las 07:00`
+            : 'Agrupadas por mes y por hora'
 
   return (
     <div className="shell">
@@ -272,19 +283,23 @@ export default function App({ onLock }: AppProps) {
                   ? 'Tus obsesiones'
                   : tab === 'artists'
                     ? 'Tus artistas más escuchados'
-                    : 'Tu actividad'}
+                    : tab === 'sleep'
+                      ? 'Para dormir'
+                      : 'Tu actividad'}
               </h1>
               <p>
                 {tab === 'obsessions'
                   ? 'Las canciones que se quedaron una temporada: una o dos semanas, casi todos los días y varias veces.'
                   : tab === 'artists'
                     ? 'Quién suena más en tu historial, con sus reproducciones y canciones.'
-                    : 'Cuándo escuchas: tus meses y tus horas con más música.'}
+                    : tab === 'sleep'
+                      ? 'Lo que suena entre las 00:00 y las 07:00: horas nocturnas, porcentaje de noche y las canciones que te acompañan al dormir.'
+                      : 'Cuándo escuchas: tus meses y tus horas con más música.'}
               </p>
             </header>
           )}
 
-          {tab !== 'obsessions' ? (
+          {tab !== 'obsessions' && tab !== 'sleep' ? (
             <StatsStrip stats={statsQuery.data} isLoading={statsQuery.isLoading} />
           ) : null}
 
@@ -339,6 +354,15 @@ export default function App({ onLock }: AppProps) {
             {tab === 'activity' ? (
               <ActivityView stats={statsQuery.data} isLoading={statsQuery.isLoading} />
             ) : null}
+
+            {tab === 'sleep' ? (
+              <SleepView
+                data={sleepQuery.data}
+                isLoading={sleepQuery.isLoading}
+                isError={sleepQuery.isError}
+                onOpenSong={openSongById}
+              />
+            ) : null}
           </section>
         </main>
 
@@ -350,6 +374,10 @@ export default function App({ onLock }: AppProps) {
           recap={recapOpen}
           onClose={() => setRecapOpen(null)}
           onOpenObsession={openObsession}
+          onOpenSleep={() => {
+            setRecapOpen(null)
+            setTab('sleep')
+          }}
         />
       ) : null}
 

@@ -3323,6 +3323,385 @@ a {
   flex: 1;
 }
 
+/* ── Para dormir ─────────────────────────────────────────────── */
+
+.sleep-view {
+  animation: heroIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sleep-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 28px;
+  overflow: hidden;
+  border: 1px solid rgba(143, 179, 255, 0.24);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(35, 49, 94, 0.9), rgba(12, 16, 32, 0.94));
+  isolation: isolate;
+}
+
+.sleep-hero__glow {
+  position: absolute;
+  inset: -50% 42% auto -10%;
+  z-index: -1;
+  height: 200%;
+  background: radial-gradient(circle, rgba(91, 141, 239, 0.38), transparent 65%);
+}
+
+.sleep-hero__moon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: 1px solid rgba(143, 179, 255, 0.3);
+  border-radius: 50%;
+  background: rgba(143, 179, 255, 0.14);
+  color: #c7d8ff;
+}
+
+.sleep-hero__copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.sleep-hero__eyebrow {
+  color: #9db6e8;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.sleep-hero__title {
+  margin-top: 4px;
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.sleep-hero__artist {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 14px;
+}
+
+.sleep-hero__meta {
+  margin-top: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+}
+
+.sleep-hero .cover--lg {
+  flex: 0 0 auto;
+  width: 132px;
+  height: 132px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+.sleep-stats {
+  margin: 20px 0 0;
+}
+
+.sleep-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 13px 0 24px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.sleep-facts span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sleep-facts svg {
+  color: #8fb3ff;
+}
+
+.sleep-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sleep-list__head,
+.sleep-row {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 2.2fr) 130px minmax(100px, 0.8fr) 90px 32px;
+  align-items: center;
+  gap: 16px;
+}
+
+.sleep-list__head {
+  padding: 0 12px 9px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text-faint);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.sleep-list__head-right {
+  text-align: right;
+}
+
+.sleep-row {
+  padding: 7px 12px;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.sleep-row:hover {
+  background: rgba(143, 179, 255, 0.06);
+}
+
+.sleep-row__rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.sleep-row__rank.is-top {
+  color: #8fb3ff;
+}
+
+.sleep-row__main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sleep-row__main .cover {
+  transition: transform 0.18s ease;
+}
+
+.sleep-row:hover .sleep-row__main .cover {
+  transform: scale(1.04);
+}
+
+.sleep-row__text {
+  min-width: 0;
+}
+
+.sleep-row__title {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sleep-row__artist {
+  margin-top: 1px;
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sleep-row__plays {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sleep-row__count {
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sleep-row__hint {
+  color: var(--text-faint);
+  font-size: 10px;
+}
+
+.sleep-row__share {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sleep-row__badge {
+  color: #bcd2ff;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.sleep-row__bar {
+  display: block;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.sleep-row__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #8fb3ff;
+  opacity: 0.9;
+}
+
+.sleep-row__minutes {
+  color: var(--text-dim);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.sleep-row__timeline {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.sleep-row:hover .sleep-row__timeline,
+.sleep-row__timeline:focus-visible {
+  color: var(--text);
+  opacity: 1;
+}
+
+.sleep-row__timeline:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+.sleep-note {
+  max-width: 80ch;
+  margin-top: 14px;
+  color: var(--text-faint);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.sleep-state {
+  display: grid;
+  gap: 10px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.sleep-state .skeleton--cover {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+}
+
+.sleep-state .skeleton--title {
+  width: 38%;
+}
+
+.sleep-state .skeleton--album {
+  width: 58%;
+}
+
+.recap-sleep {
+  padding: 14px;
+  border: 1px solid rgba(143, 179, 255, 0.22);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(40, 55, 100, 0.24), rgba(255, 255, 255, 0.02));
+}
+
+.recap-sleep__lead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.recap-sleep__lead svg {
+  flex: 0 0 auto;
+  color: #8fb3ff;
+}
+
+.recap-sleep__list {
+  margin: 10px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+
+.recap-sleep__item {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.recap-sleep__rank {
+  display: flex;
+  justify-content: center;
+  color: #8fb3ff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.recap-sleep__title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recap-sleep__title small {
+  overflow: hidden;
+  color: var(--text-faint);
+  font-size: 10.5px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+}
+
+.recap-sleep__share {
+  color: #bcd2ff;
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.recap-sleep__action {
+  margin-top: 10px;
+}
+
 /* ── Toast ───────────────────────────────────────────────────── */
 
 .toast {
@@ -3678,7 +4057,7 @@ a {
     left: 0;
     z-index: 40;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     padding-bottom: env(safe-area-inset-bottom);
     background: rgba(10, 10, 11, 0.97);
     border-top: 1px solid var(--line);
@@ -3805,6 +4184,57 @@ a {
 
   .song-row__bar {
     width: 44px;
+  }
+
+  .sleep-hero {
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 20px;
+  }
+
+  .sleep-hero__moon {
+    width: 46px;
+    height: 46px;
+  }
+
+  .sleep-hero .cover--lg {
+    width: 82px;
+    height: 82px;
+  }
+
+  .sleep-hero__title {
+    font-size: 26px;
+  }
+
+  .sleep-hero__meta {
+    font-size: 11px;
+  }
+
+  .sleep-facts {
+    font-size: 11px;
+  }
+
+  .sleep-list__head {
+    display: none;
+  }
+
+  .sleep-row {
+    grid-template-columns: 28px minmax(0, 1fr) 64px 28px;
+    gap: 10px;
+    padding: 7px 6px;
+  }
+
+  .sleep-row__plays,
+  .sleep-row__share {
+    display: none;
+  }
+
+  .sleep-row__minutes {
+    font-size: 11.5px;
+  }
+
+  .recap-sleep__item {
+    grid-template-columns: 20px minmax(0, 1fr) auto;
   }
 
   .artist-podium {
