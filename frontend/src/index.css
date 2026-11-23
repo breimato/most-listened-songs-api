@@ -4137,7 +4137,8 @@ a {
 }
 
 .now-playing__record .cover__fallback {
-  opacity: 0;
+  opacity: 0.85;
+  font-size: 11px;
 }
 
 .now-playing__arm {

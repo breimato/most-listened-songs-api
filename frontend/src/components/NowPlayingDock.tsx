@@ -66,21 +66,22 @@ export function NowPlayingDock() {
       <div className="now-playing__inner">
         <div className="now-playing__vinyl" aria-hidden="true">
           <div className="now-playing__record">
-            <CoverArt
-              artist={track?.artist ?? ''}
-              title={track?.title ?? ''}
-              size="sm"
-              round
-              src={artwork}
-            />
-            {!artwork ? (
+            {track ? (
+              <CoverArt
+                artist={track.artist}
+                title={track.title}
+                size="sm"
+                round
+                src={artwork}
+              />
+            ) : (
               <span className="now-playing__mark">
                 <i />
                 <i />
                 <i />
                 <i />
               </span>
-            ) : null}
+            )}
           </div>
 
           <svg
