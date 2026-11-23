@@ -49,7 +49,7 @@ export function TopBar({
         <span className="topbar__slash" aria-hidden="true">
           /
         </span>
-        <span className="topbar__name">Scrobbles</span>
+        <span className="topbar__name">GroBeats FM</span>
         <span className="topbar__section">{TAB_LABEL[tab]}</span>
       </div>
 

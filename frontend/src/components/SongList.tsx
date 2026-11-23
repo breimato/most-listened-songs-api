@@ -50,7 +50,7 @@ export function SongList({
       <div className="state">
         <p className="state__title">Todavía no hay canciones</p>
         <p className="state__copy">
-          {emptyHint ?? 'Sincroniza con Last.fm para importar tus scrobbles.'}
+          {emptyHint ?? 'Sincroniza tu historial para importar tus reproducciones.'}
         </p>
       </div>
     )

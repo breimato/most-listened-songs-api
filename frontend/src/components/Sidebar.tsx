@@ -44,8 +44,8 @@ export function Sidebar({
           <i />
         </span>
         <span className="brand__text">
-          <span className="brand__name">Scrobbles</span>
-          <span className="brand__sub">Last.fm</span>
+          <span className="brand__name">GroBeats FM</span>
+          <span className="brand__sub">Tu historial musical</span>
         </span>
       </button>
 

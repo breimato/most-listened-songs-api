@@ -12,11 +12,11 @@ Un único usuario (Breixo) que escucha música en Spotify, YouTube y YouTube Mus
 
 ## Product Purpose
 
-Convertir el historial de scrobbles de Last.fm en un ranking visual de canciones y artistas, con estadísticas de actividad y recaps por temporadas. El éxito es entender de un vistazo qué suena más y revivir "los temas del verano" o "los del año" sin trabajo manual.
+GroBeats FM convierte el historial de scrobbles de Last.fm en un ranking visual de canciones y artistas, con estadísticas de actividad, recaps por temporadas y un reproductor visual que muestra qué está sonando. El éxito es entender de un vistazo qué suena más, ver qué suena ahora y revivir "los temas del verano" o "los del año" sin trabajo manual.
 
 ## Positioning
 
-Last.fm actúa como agregador único de todos los dispositivos; la app añade una capa propia de recaps estacionales y una presentación musical cuidada que Last.fm no ofrece. No es una red social ni un reproductor.
+Last.fm actúa como agregador único de todos los dispositivos; GroBeats FM añade una capa propia de recaps estacionales, un reproductor visual con vinilo y una presentación musical cuidada que Last.fm no ofrece. No es una red social ni reproduce audio: muestra lo que suena.
 
 ## Operating Context
 
@@ -40,7 +40,7 @@ Last.fm actúa como agregador único de todos los dispositivos; la app añade un
 
 ## Brand Commitments
 
-El usuario fijó una estética "rollo Spotify": fondo oscuro, acento verde, navegación lateral, carátulas protagonistas y tipografía compacta. Es una inspiración, no un clon literal: la identidad propia son los recaps estacionales y la mezcla de plataformas.
+La marca es GroBeats FM. El usuario fijó una estética "rollo Spotify": fondo oscuro, acento verde, navegación lateral, carátulas protagonistas y tipografía compacta. Es una inspiración, no un clon literal: la identidad propia son el dock de vinilo en directo, los recaps estacionales y la mezcla de plataformas. La tipografía combina Bricolage Grotesque en titulares con Instrument Sans en texto.
 
 ## Evidence on Hand
 

@@ -46,7 +46,7 @@ export function ArtistList({ artists, songsPool, isLoading }: ArtistListProps) {
     return (
       <div className="state">
         <p className="state__title">Sin artistas en este periodo</p>
-        <p className="state__copy">Prueba con otro año o sincroniza de nuevo con Last.fm.</p>
+        <p className="state__copy">Prueba con otro año o vuelve a sincronizar.</p>
       </div>
     )
   }

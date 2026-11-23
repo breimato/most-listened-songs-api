@@ -51,8 +51,8 @@ export function AccessGate({ onUnlock }: AccessGateProps) {
             <i />
             <i />
           </span>
-          <span className="gate__name">Scrobbles</span>
-          <span className="gate__sub">Last.fm</span>
+          <span className="gate__name">GroBeats FM</span>
+          <span className="gate__sub">Tu historial musical</span>
         </div>
 
         <span className="gate__lock" aria-hidden="true">

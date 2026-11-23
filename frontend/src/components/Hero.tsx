@@ -57,7 +57,7 @@ export function Hero({
                     day: 'numeric',
                     month: 'long',
                   }).format(new Date(stats.last_listen))}`
-                : 'Conectado a Last.fm'}
+                : 'Tu historial musical, al día.'}
             </span>
           </div>
         </div>
@@ -82,7 +82,7 @@ export function Hero({
             <div className="feature__empty">
               <p className="feature__empty-title">Tu número 1 aparecerá aquí</p>
               <p className="feature__empty-copy">
-                Sincroniza con Last.fm para importar tu historial.
+                Sincroniza tu historial para importar tus reproducciones.
               </p>
             </div>
           )}

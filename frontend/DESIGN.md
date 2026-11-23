@@ -1,10 +1,11 @@
-# Design System — Scrobbles
+# Design System — GroBeats FM
 
 ## Direction
 
-Una sala de escucha personal inspirada en Spotify: fondo casi negro, sidebar
-propia, carátulas protagonistas y un único verde que señala lo importante. La
-identidad propia son los recaps de temporada, no una copia del reproductor.
+Una sala de escucha personal y viva: fondo casi negro, sidebar propia, carátulas
+protagonistas y un único verde que señala lo importante. La firma es el dock de
+vinilo que muestra lo que suena, junto a los recaps de temporada. La inspiración
+es Spotify en la estructura, no en la identidad.
 
 ## Tokens
 
@@ -52,7 +53,7 @@ invierno `#5b8def → #25346b`, primavera `#3ddc84 → #0f7a43`, año
 
 ## Componentes
 
-- **Sidebar**: marca con ecualizador, navegación de 3 secciones y lista de recaps con estado (`Nuevo`, `En curso`).
+- **Sidebar**: marca GroBeats FM con ecualizador, navegación de 3 secciones y lista de recaps con estado (`Nuevo`, `En curso`).
 - **Topbar**: breadcrumb, campana con punto de no leído y CTA verde de sincronización.
 - **Hero**: H1 editorial + tarjeta del nº 1 con carátula, fondo desenfocado de la carátula y acciones.
 - **Stats strip**: cuatro hechos separados por hairlines, sin tarjetas.
@@ -67,6 +68,7 @@ invierno `#5b8def → #25346b`, primavera `#3ddc84 → #0f7a43`, año
 - **Obsesiones**: lista de episodios (obsesión/racha) con portada, periodo, días fuertes, plays, pico y mini-heatmap; timeline modal con calendario de calor diario y episodios.
 - **Recap Wrapped**: hero con horas/plays/artistas, rejilla de métricas, canción y artista del periodo, top 5 canciones/artistas/álbumes, géneros, momentos, obsesión, perfil y artista mes a mes.
 - **Carátulas**: resueltas en el backend (Deezer) y servidas como URL; el navegador solo carga la imagen, sin scripts de terceros.
+- **NowPlayingDock**: reproductor fijo inferior con vinilo, portada como etiqueta, brazo, lavado desenfocado de la carátula, ecualizador y tiempo relativo. Estados `EN VIVO`, `ÚLTIMA ESCUCHA`, `SIN CONEXIÓN`, `CONECTANDO` e idle; el vinilo solo gira en directo y no hay controles falsos.
 
 ## Movimiento
 

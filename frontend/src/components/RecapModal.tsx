@@ -413,7 +413,7 @@ export function RecapModal({
                       </span>
                     ))}
                   </div>
-                  <p className="recap-note">Según los tags de artista de Last.fm.</p>
+                  <p className="recap-note">Según los tags de tus artistas.</p>
                 </section>
               ) : null}
 

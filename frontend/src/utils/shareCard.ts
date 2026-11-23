@@ -101,7 +101,7 @@ async function renderCard(data: Recap, period: RecapPeriod): Promise<HTMLCanvasE
   ctx.textBaseline = 'top'
   ctx.fillStyle = 'rgba(255,255,255,0.88)'
   ctx.font = `800 27px ${DISPLAY_FONT}`
-  ctx.fillText('SCROBBLES', 64, 60)
+  ctx.fillText('GROBEATS FM', 64, 60)
 
   ctx.textAlign = 'right'
   ctx.fillStyle = 'rgba(255,255,255,0.72)'
@@ -233,7 +233,7 @@ async function renderCard(data: Recap, period: RecapPeriod): Promise<HTMLCanvasE
   ctx.fillText('breimato.es/youtube', 64, HEIGHT - 58)
 
   ctx.textAlign = 'right'
-  ctx.fillText('Last.fm · Pano Scrobbler', WIDTH - 64, HEIGHT - 58)
+  ctx.fillText('GroBeats FM', WIDTH - 64, HEIGHT - 58)
   ctx.textAlign = 'left'
 
   return canvas
