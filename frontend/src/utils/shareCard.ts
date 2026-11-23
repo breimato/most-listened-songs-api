@@ -6,7 +6,8 @@ import { buildComparisons } from './comparisons'
 
 const WIDTH = 1080
 const HEIGHT = 1350
-const FONT = 'Figtree, sans-serif'
+const DISPLAY_FONT = "'Bricolage Grotesque', sans-serif"
+const BODY_FONT = "'Instrument Sans', sans-serif"
 const nf = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 })
 
 function formatHours(hours: number): string {
@@ -99,17 +100,17 @@ async function renderCard(data: Recap, period: RecapPeriod): Promise<HTMLCanvasE
   // Cabecera
   ctx.textBaseline = 'top'
   ctx.fillStyle = 'rgba(255,255,255,0.88)'
-  ctx.font = `800 27px ${FONT}`
+  ctx.font = `800 27px ${DISPLAY_FONT}`
   ctx.fillText('SCROBBLES', 64, 60)
 
   ctx.textAlign = 'right'
   ctx.fillStyle = 'rgba(255,255,255,0.72)'
-  ctx.font = `600 22px ${FONT}`
+  ctx.font = `600 22px ${BODY_FONT}`
   ctx.fillText(period.label.toUpperCase(), WIDTH - 64, 64)
   ctx.textAlign = 'left'
 
   ctx.fillStyle = '#ffffff'
-  ctx.font = `800 62px ${FONT}`
+  ctx.font = `800 62px ${DISPLAY_FONT}`
   const titleLines = wrapText(ctx, period.title, WIDTH - 128).slice(0, 2)
   titleLines.forEach((line, index) => {
     ctx.fillText(line, 64, 128 + index * 68)
@@ -129,7 +130,7 @@ async function renderCard(data: Recap, period: RecapPeriod): Promise<HTMLCanvasE
     ctx.fillStyle = fallback
     ctx.fillRect(64, coverY, 300, 300)
     ctx.fillStyle = 'rgba(255,255,255,0.82)'
-    ctx.font = `800 84px ${FONT}`
+    ctx.font = `800 84px ${DISPLAY_FONT}`
     ctx.textAlign = 'center'
     ctx.fillText(initials(topSong?.artist ?? '?'), 214, coverY + 96)
     ctx.textAlign = 'left'
@@ -140,22 +141,22 @@ async function renderCard(data: Recap, period: RecapPeriod): Promise<HTMLCanvasE
   const textX = 400
   const textWidth = WIDTH - textX - 64
   ctx.fillStyle = 'rgba(255,255,255,0.65)'
-  ctx.font = `700 20px ${FONT}`
+  ctx.font = `700 20px ${BODY_FONT}`
   ctx.fillText('TU CANCIÓN', textX, coverY + 6)
 
   ctx.fillStyle = '#ffffff'
-  ctx.font = `800 42px ${FONT}`
+  ctx.font = `800 42px ${DISPLAY_FONT}`
   const songLines = wrapText(ctx, topSong?.title ?? '—', textWidth).slice(0, 2)
   songLines.forEach((line, index) => {
     ctx.fillText(line, textX, coverY + 40 + index * 48)
   })
 
   ctx.fillStyle = 'rgba(255,255,255,0.8)'
-  ctx.font = `600 25px ${FONT}`
+  ctx.font = `600 25px ${BODY_FONT}`
   ctx.fillText(topSong?.artist ?? '', textX, coverY + 142)
 
   ctx.fillStyle = 'rgba(255,255,255,0.6)'
-  ctx.font = `500 21px ${FONT}`
+  ctx.font = `500 21px ${BODY_FONT}`
   if (topSong) {
     ctx.fillText(
       `${nf.format(topSong.plays)} plays · ${topSong.days} días`,
@@ -166,15 +167,15 @@ async function renderCard(data: Recap, period: RecapPeriod): Promise<HTMLCanvasE
 
   // Horas
   ctx.fillStyle = '#ffffff'
-  ctx.font = `900 104px ${FONT}`
+  ctx.font = `800 104px ${DISPLAY_FONT}`
   ctx.fillText(`${approximate ? '≈ ' : ''}${formatHours(hours)}`, 64, 650)
 
   ctx.fillStyle = 'rgba(255,255,255,0.68)'
-  ctx.font = `700 21px ${FONT}`
+  ctx.font = `700 21px ${BODY_FONT}`
   ctx.fillText('DE MÚSICA', 66, 764)
 
   ctx.fillStyle = 'rgba(255,255,255,0.82)'
-  ctx.font = `600 27px ${FONT}`
+  ctx.font = `600 27px ${BODY_FONT}`
   ctx.fillText(
     `${nf.format(data.total_plays)} reproducciones · ${nf.format(data.unique_artists)} artistas`,
     64,
@@ -183,15 +184,15 @@ async function renderCard(data: Recap, period: RecapPeriod): Promise<HTMLCanvasE
 
   // Artista + géneros
   ctx.fillStyle = 'rgba(255,255,255,0.62)'
-  ctx.font = `700 19px ${FONT}`
+  ctx.font = `700 19px ${BODY_FONT}`
   ctx.fillText('TU ARTISTA', 64, 876)
 
   ctx.fillStyle = '#ffffff'
-  ctx.font = `800 38px ${FONT}`
+  ctx.font = `800 38px ${DISPLAY_FONT}`
   ctx.fillText(topArtist?.artist ?? '—', 64, 902)
 
   ctx.fillStyle = 'rgba(255,255,255,0.72)'
-  ctx.font = `500 21px ${FONT}`
+  ctx.font = `500 21px ${BODY_FONT}`
   if (topArtist) {
     ctx.fillText(
       `${nf.format(topArtist.plays)} plays · ${formatHours(topArtist.minutes / 60)}`,
@@ -202,7 +203,7 @@ async function renderCard(data: Recap, period: RecapPeriod): Promise<HTMLCanvasE
 
   if (data.top_genres.length) {
     ctx.fillStyle = 'rgba(255,255,255,0.7)'
-    ctx.font = `600 21px ${FONT}`
+    ctx.font = `600 21px ${BODY_FONT}`
     ctx.fillText(
       data.top_genres.slice(0, 3).map((genre) => genre.name).join(' · '),
       64,
@@ -211,24 +212,24 @@ async function renderCard(data: Recap, period: RecapPeriod): Promise<HTMLCanvasE
   }
 
   ctx.fillStyle = 'rgba(255,255,255,0.55)'
-  ctx.font = `500 20px ${FONT}`
+  ctx.font = `500 20px ${BODY_FONT}`
   ctx.fillText(`Perfil: ${data.profile.label}`, 64, 1036)
 
   // Comparaciones
   let comparisonY = 1100
   for (const comparison of comparisons) {
     ctx.fillStyle = 'rgba(255,255,255,0.55)'
-    ctx.font = `600 19px ${FONT}`
+    ctx.font = `600 19px ${BODY_FONT}`
     ctx.fillText(comparison.label, 64, comparisonY)
     ctx.fillStyle = '#1ed760'
-    ctx.font = `800 32px ${FONT}`
+    ctx.font = `800 32px ${DISPLAY_FONT}`
     ctx.fillText(comparison.value, 64, comparisonY + 24)
     comparisonY += 82
   }
 
   // Pie
   ctx.fillStyle = 'rgba(255,255,255,0.42)'
-  ctx.font = `500 19px ${FONT}`
+  ctx.font = `500 19px ${BODY_FONT}`
   ctx.fillText('breimato.es/youtube', 64, HEIGHT - 58)
 
   ctx.textAlign = 'right'

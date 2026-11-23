@@ -34,7 +34,10 @@ invierno `#5b8def → #25346b`, primavera `#3ddc84 → #0f7a43`, año
 
 ### Tipografía
 
-- Familia única: **Figtree** (Google Fonts), pesos 400–900.
+- **Bricolage Grotesque** (Google Fonts) para titulares, marca y cifras
+  editoriales, pesos 600–800.
+- **Instrument Sans** (Google Fonts) para cuerpo, controles, metadatos y
+  números, pesos 400–700.
 - H1: `clamp(2.35rem, 4.2vw, 3.75rem)`, 800, `letter-spacing: -0.045em`, `line-height: .98`.
 - H2: 21px / 800 / -0.03em; H3 16px / 700.
 - Cuerpo 15px; secundario 12–14px; etiquetas 10–11px con tracking `.12em` en mayúsculas.

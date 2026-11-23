@@ -25,7 +25,9 @@
   --radius-lg: 16px;
   --radius-xl: 20px;
 
-  --font: 'Figtree', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Instrument Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font: var(--font-body);
   --shadow-panel: 0 24px 70px rgba(0, 0, 0, 0.55);
 
   --sidebar-w: 264px;
@@ -69,6 +71,17 @@ dl,
 dd,
 dt {
   margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+.brand__name,
+.topbar__name,
+.gate__name,
+.now-playing__title {
+  font-family: var(--font-display);
 }
 
 button,
