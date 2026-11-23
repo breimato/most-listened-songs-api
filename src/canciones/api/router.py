@@ -16,6 +16,8 @@ from canciones.api.schemas import (
     ArtworkResponse,
     DedupeResponse,
     DurationBackfillResponse,
+    NowPlayingResponse,
+    NowPlayingTrackResponse,
     ObsessionDayResponse,
     ObsessionResponse,
     RecapAlbumResponse,
@@ -69,6 +71,33 @@ def sync(repo: CancionesRepository = Depends(get_repository)):
         imported=imported,
         skipped=skipped,
         message=f"Imported {imported} scrobbles ({skipped} already known).",
+    )
+
+
+@router.get("/now-playing", response_model=NowPlayingResponse)
+def get_now_playing():
+    """Canción en directo o última escucha, sin escribir en la base de datos."""
+    from canciones.adapters.lastfm.api_ingestor import LastFMAPIIngestor
+
+    try:
+        track = LastFMAPIIngestor().fetch_now_playing()
+    except (HTTPError, URLError):
+        raise HTTPException(
+            502,
+            "No se pudo consultar el estado de reproducción.",
+        )
+
+    if track is None:
+        return NowPlayingResponse(playing=False, track=None)
+
+    return NowPlayingResponse(
+        playing=track.playing,
+        track=NowPlayingTrackResponse(
+            title=track.title,
+            artist=track.artist,
+            album=track.album,
+            scrobbled_at=track.scrobbled_at,
+        ),
     )
 
 

@@ -39,6 +39,18 @@ class ArtworkResponse(BaseModel):
     url: str | None
 
 
+class NowPlayingTrackResponse(BaseModel):
+    title: str
+    artist: str
+    album: str
+    scrobbled_at: datetime | None
+
+
+class NowPlayingResponse(BaseModel):
+    playing: bool
+    track: NowPlayingTrackResponse | None
+
+
 class ObsessionDayResponse(BaseModel):
     date: date
     plays: int

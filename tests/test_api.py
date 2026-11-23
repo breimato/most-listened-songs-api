@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timezone
+from urllib.error import URLError
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,7 +9,9 @@ from sqlalchemy.pool import StaticPool
 
 from canciones.adapters.db.models import Base, PlayDB, SongDB
 from canciones.adapters.db.session import get_session
+from canciones.adapters.lastfm.api_ingestor import LastFMAPIIngestor
 from canciones.config import settings
+from canciones.domain.models import NowPlayingTrack
 from canciones.main import app
 
 
@@ -343,3 +346,71 @@ def test_durations_backfill_endpoint(client, db_session, monkeypatch):
 
     db_session.expire_all()
     assert db_session.get(SongDB, song.id).duration_seconds == 200
+
+
+def test_now_playing_endpoint_returns_live_track(client, monkeypatch):
+    monkeypatch.setattr(
+        LastFMAPIIngestor,
+        "fetch_now_playing",
+        lambda self: NowPlayingTrack(
+            title="Voto En Blanco",
+            artist="El Jincho",
+            album="Single",
+            playing=True,
+        ),
+    )
+
+    response = client.get("/api/v1/now-playing")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "playing": True,
+        "track": {
+            "title": "Voto En Blanco",
+            "artist": "El Jincho",
+            "album": "Single",
+            "scrobbled_at": None,
+        },
+    }
+
+
+def test_now_playing_endpoint_serializes_utc(client, monkeypatch):
+    monkeypatch.setattr(
+        LastFMAPIIngestor,
+        "fetch_now_playing",
+        lambda self: NowPlayingTrack(
+            title="Closer",
+            artist="Joe Inoue",
+            album="Closer",
+            playing=False,
+            scrobbled_at=datetime(2026, 11, 23, 20, 0, tzinfo=timezone.utc),
+        ),
+    )
+
+    response = client.get("/api/v1/now-playing")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["playing"] is False
+    assert payload["track"]["scrobbled_at"].startswith("2026-11-23T20:00:00")
+
+
+def test_now_playing_endpoint_without_credentials_returns_empty(client):
+    response = client.get("/api/v1/now-playing")
+
+    assert response.status_code == 200
+    assert response.json() == {"playing": False, "track": None}
+
+
+def test_now_playing_endpoint_handles_service_error(client, monkeypatch):
+    def fail(self):
+        raise URLError("boom")
+
+    monkeypatch.setattr(LastFMAPIIngestor, "fetch_now_playing", fail)
+
+    response = client.get("/api/v1/now-playing")
+
+    assert response.status_code == 502
+    detail = response.json()["detail"]
+    assert "Last.fm" not in detail
+    assert "reproducción" in detail.lower()

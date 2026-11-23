@@ -12,6 +12,15 @@ class Song:
 
 
 @dataclass
+class NowPlayingTrack:
+    title: str
+    artist: str
+    album: str = ""
+    playing: bool = False
+    scrobbled_at: datetime | None = None
+
+
+@dataclass
 class Play:
     id: int | None = None
     song_id: int = 0
