@@ -1,5 +1,6 @@
 import type {
   Artist,
+  NowPlaying,
   Obsession,
   Recap,
   SleepData,
@@ -103,6 +104,10 @@ export const api = {
 
   getStats(range: RangeParams = {}) {
     return request<Stats>(`/stats${buildQuery(rangeQuery(range))}`)
+  },
+
+  getNowPlaying() {
+    return request<NowPlaying>('/now-playing')
   },
 
   getObsessions(range: RangeParams = {}) {

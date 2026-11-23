@@ -6,6 +6,18 @@ export interface Song {
   plays: number
 }
 
+export interface NowPlayingTrack {
+  title: string
+  artist: string
+  album: string
+  scrobbled_at: string | null
+}
+
+export interface NowPlaying {
+  playing: boolean
+  track: NowPlayingTrack | null
+}
+
 export interface Artist {
   artist: string
   plays: number

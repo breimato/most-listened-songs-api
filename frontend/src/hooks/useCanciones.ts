@@ -3,6 +3,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, type RangeParams } from '../services/api'
 import type { TopSongsFilters } from '../types/api'
 
+export function useNowPlaying() {
+  return useQuery({
+    queryKey: ['now-playing'],
+    queryFn: api.getNowPlaying,
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+    retry: 1,
+  })
+}
+
 export function useTopSongs(filters: TopSongsFilters) {
   return useQuery({
     queryKey: ['top-songs', filters],

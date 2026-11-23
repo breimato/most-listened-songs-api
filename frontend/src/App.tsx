@@ -5,6 +5,7 @@ import { ArtistList } from './components/ArtistList'
 import { Filters } from './components/Filters'
 import { Hero } from './components/Hero'
 import { MobileNav } from './components/MobileNav'
+import { NowPlayingDock } from './components/NowPlayingDock'
 import { ObsessionsView } from './components/ObsessionsView'
 import { RecapModal } from './components/RecapModal'
 import { RecapStrip } from './components/RecapStrip'
@@ -368,6 +369,8 @@ export default function App({ onLock }: AppProps) {
 
         <MobileNav tab={tab} onTab={setTab} />
       </div>
+
+      <NowPlayingDock />
 
       {recapOpen ? (
         <RecapModal
