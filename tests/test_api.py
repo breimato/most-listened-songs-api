@@ -143,10 +143,54 @@ def test_stats(client, seeded):
     assert data["last_listen"].startswith("2025-03-02")
 
 
-def test_sync_without_lastfm_credentials(client):
-    r = client.post("/api/v1/sync")
-    assert r.status_code == 400
-    assert "LASTFM" in r.json()["detail"]
+def test_sync_without_credentials_uses_neutral_copy(client):
+    response = client.post("/api/v1/sync")
+
+    assert response.status_code == 400
+    detail = response.json()["detail"]
+    assert "LASTFM" not in detail
+    assert "Last.fm" not in detail
+    assert "credenciales" in detail.lower()
+
+
+def test_sync_message_is_brand_neutral(client, monkeypatch):
+    from canciones.adapters.lastfm.api_ingestor import LastFMAPIIngestor
+
+    monkeypatch.setattr(
+        LastFMAPIIngestor,
+        "fetch_recent",
+        lambda self, from_ts=None: [],
+    )
+
+    response = client.post("/api/v1/sync")
+
+    assert response.status_code == 200
+    message = response.json()["message"]
+    assert "Last.fm" not in message
+    assert "reproducciones nuevas" in message
+
+
+def test_sync_service_error_is_brand_neutral(client, monkeypatch):
+    from urllib.error import URLError
+
+    from canciones.adapters.lastfm.api_ingestor import LastFMAPIIngestor
+
+    def fail(self, from_ts=None):
+        raise URLError("boom")
+
+    monkeypatch.setattr(LastFMAPIIngestor, "fetch_recent", fail)
+
+    response = client.post("/api/v1/sync")
+
+    assert response.status_code == 502
+    assert "Last.fm" not in response.json()["detail"]
+
+
+def test_recap_empty_period_uses_neutral_copy(client):
+    response = client.get("/api/v1/recap")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "No hay reproducciones en este periodo."
 
 
 def test_access_key_protects_api(client, monkeypatch):

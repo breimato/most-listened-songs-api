@@ -45,7 +45,7 @@ class LastFMAPIIngestor:
         cursor the full history is fetched. Returns (Song, played_at) pairs.
         """
         if not self._api_key or not self._username:
-            raise ValueError("LASTFM_API_KEY and LASTFM_USERNAME must be set in .env")
+            raise ValueError("Faltan las credenciales del servicio de reproducciones.")
 
         return self._paginate(from_ts=from_ts)
 

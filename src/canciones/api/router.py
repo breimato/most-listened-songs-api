@@ -52,7 +52,7 @@ router = APIRouter(
 
 @router.post("/sync", response_model=SyncResponse)
 def sync(repo: CancionesRepository = Depends(get_repository)):
-    """Fetch new scrobbles from Last.fm and store them."""
+    """Fetch new plays and store them."""
     from canciones.adapters.lastfm.api_ingestor import LastFMAPIIngestor
 
     ingestor = LastFMAPIIngestor()
@@ -62,15 +62,15 @@ def sync(repo: CancionesRepository = Depends(get_repository)):
         pairs = ingestor.fetch_recent(from_ts=from_ts)
     except ValueError as e:
         raise HTTPException(400, str(e))
-    except (HTTPError, URLError) as e:
-        raise HTTPException(502, f"Last.fm no está disponible ahora mismo: {e}")
+    except (HTTPError, URLError):
+        raise HTTPException(502, "El servicio de reproducciones no está disponible ahora mismo.")
 
     imported, skipped = repo.import_scrobbles(pairs)
 
     return SyncResponse(
         imported=imported,
         skipped=skipped,
-        message=f"Imported {imported} scrobbles ({skipped} already known).",
+        message=f"{imported} reproducciones nuevas ({skipped} ya conocidas).",
     )
 
 
@@ -374,7 +374,7 @@ def get_recap(
 ):
     records = repo.get_play_history(since=since, until=until)
     if not records:
-        raise HTTPException(404, "No hay scrobbles en este periodo")
+        raise HTTPException(404, "No hay reproducciones en este periodo.")
 
     recap = build_recap(
         records,
